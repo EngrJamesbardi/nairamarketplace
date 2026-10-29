@@ -2,8 +2,9 @@
 import { useFormStatus } from "react-dom";
 import type { ActionState } from "@/lib/validation";
 
-export function SubmitButton({ children, className = "btn-primary", pendingText = "Please wait…", ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { pendingText?: string }) {
-  const { pending } = useFormStatus();
+export function SubmitButton({ children, className = "btn-primary", pendingText = "Please wait…", pending: pendingProp, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { pendingText?: string; pending?: boolean }) {
+  const status = useFormStatus();
+  const pending = pendingProp ?? status.pending;
   return (
     <button type="submit" className={className} disabled={pending || rest.disabled} aria-busy={pending} {...rest}>
       {pending ? pendingText : children}

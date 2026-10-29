@@ -44,6 +44,22 @@ describe("mock payment provider", () => {
     expect(mockProvider.configured()).toBe(false);
     process.env.MOCK_PAYMENT_WEBHOOK_SECRET = saved;
   });
+
+  it("rejects the .env.example placeholder secret", async () => {
+    const { mockProvider } = await import("@/lib/payments/mock");
+    vi.stubEnv("MOCK_PAYMENT_WEBHOOK_SECRET", "change-me-dev-only");
+    expect(mockProvider.configured()).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
+  it("is refused in production unless explicitly allowed", async () => {
+    const { mockProvider } = await import("@/lib/payments/mock");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(mockProvider.configured()).toBe(false);
+    vi.stubEnv("ALLOW_MOCK_PAYMENTS", "true");
+    expect(mockProvider.configured()).toBe(true);
+    vi.unstubAllEnvs();
+  });
 });
 
 describe("provider registry", () => {

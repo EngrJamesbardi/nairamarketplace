@@ -55,7 +55,9 @@ Demo accounts from `supabase/seed.sql` (password `Password123!`). All seed data 
 | buyer@naira.test | Buyer |
 
 Payments use the **development mock** locally (`PAYMENTS_ENABLED_PROVIDERS=mock`): checkout opens a clearly labelled mock page that
-sends a signed webhook to the app. No real money moves.
+sends a signed webhook to the app. No real money moves. Set `MOCK_PAYMENT_WEBHOOK_SECRET` to 16+ random characters (the
+`.env.example` placeholder is rejected). A production build (`npm run build && npm start`, used by the end-to-end tests) also needs
+`ALLOW_MOCK_PAYMENTS=true` in `.env.local`. Never set that on a public deployment.
 
 ## Tests
 

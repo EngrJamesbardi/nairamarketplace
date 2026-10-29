@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { saveListing } from "@/app/actions/listings";
 import { FormMessage, SubmitButton, FieldError } from "@/components/FormStatus";
 import { ImageUploader } from "@/components/ImageUploader";
@@ -22,6 +23,7 @@ export function ListingForm({
   currency,
   regionLabel,
   sellerDefaults,
+  requestId,
 }: {
   userId: string;
   listing?: Listing;
@@ -31,8 +33,22 @@ export function ListingForm({
   currency: string;
   regionLabel: string;
   sellerDefaults: { regionId: number | null; city: string | null; deliveryOptions: string[] };
+  /** New listings only: generated on the server so repeat submissions of this form are recognised. */
+  requestId?: string;
 }) {
-  const [state, action] = useActionState(saveListing, null);
+  // A dropped connection would otherwise throw to the error page and lose everything the seller typed. The listing may
+  // already be saved, so say so: publishing again is safe because requestId makes the save idempotent.
+  const [state, action, pending] = useActionState(async (prev: Parameters<typeof saveListing>[0], formData: FormData) => {
+    try {
+      return await saveListing(prev, formData);
+    } catch (e) {
+      unstable_rethrow(e);
+      return { error: "Connection problem. Your listing may already be saved. Check your connection and tap the button again: it won't be posted twice." };
+    }
+  }, null);
+  useEffect(() => {
+    if (state?.redirectTo) window.location.assign(state.redirectTo);
+  }, [state]);
   const [categoryId, setCategoryId] = useState<number | "">(listing?.category_id ?? "");
   const [priceType, setPriceType] = useState(listing?.price_type ?? "negotiable");
   const top = categories.filter((c) => !c.parent_id);
@@ -42,8 +58,22 @@ export function ListingForm({
   const isDraft = !listing || listing.status === "draft";
 
   return (
-    <form action={action} className="space-y-6" noValidate>
+    <form
+      action={action}
+      // Submit through the action ourselves so React does not clear the form afterwards: a validation error or a dropped
+      // connection must not wipe what the seller typed. Without JavaScript the form still posts natively via `action`.
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (pending) return;
+        const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+        const formData = new FormData(e.currentTarget, submitter);
+        startTransition(() => action(formData));
+      }}
+      className="space-y-6"
+      noValidate
+    >
       {listing && <input type="hidden" name="id" value={listing.id} />}
+      {!listing && requestId && <input type="hidden" name="requestId" value={requestId} />}
       <input type="hidden" name="currency" value={currency} />
 
       <section className="card space-y-3 p-5">
@@ -176,9 +206,12 @@ export function ListingForm({
       </section>
 
       <FormMessage state={state} />
+      {state?.redirectTo && (
+        <p role="status" className="text-sm text-success">Saved. <a href={state.redirectTo} className="link">Go to your listings</a></p>
+      )}
       <div className="flex flex-wrap gap-3">
-        <SubmitButton name="status" value="active" pendingText="Saving…">{isDraft ? "Publish listing" : "Save changes"}</SubmitButton>
-        {isDraft && <SubmitButton name="status" value="draft" className="btn-secondary" pendingText="Saving…">Save as draft</SubmitButton>}
+        <SubmitButton name="status" value="active" pendingText="Saving…" pending={pending}>{isDraft ? "Publish listing" : "Save changes"}</SubmitButton>
+        {isDraft && <SubmitButton name="status" value="draft" className="btn-secondary" pendingText="Saving…" pending={pending}>Save as draft</SubmitButton>}
       </div>
     </form>
   );

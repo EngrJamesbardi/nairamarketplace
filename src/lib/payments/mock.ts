@@ -4,7 +4,7 @@ import { hmacHex, safeEqualHex } from "./signature";
 /**
  * DEVELOPMENT MOCK. Simulates a hosted checkout and a signed provider webhook so the full flow
  * (checkout -> signed callback -> server verification -> ledger) can be exercised without a real provider.
- * Enabled only when PAYMENTS_ENABLED_PROVIDERS includes "mock" and MOCK_PAYMENT_WEBHOOK_SECRET is set.
+ * Enabled only when PAYMENTS_ENABLED_PROVIDERS includes "mock" and MOCK_PAYMENT_WEBHOOK_SECRET is set (see mockAllowed()).
  */
 export const MOCK_SIGNATURE_HEADER = "x-mock-signature";
 
@@ -18,6 +18,16 @@ function secret() {
   return process.env.MOCK_PAYMENT_WEBHOOK_SECRET ?? "";
 }
 
+/**
+ * Anyone who knows the secret can mint credits, so the placeholder from .env.example never counts, and a production
+ * build (`next start`, any host) refuses the mock unless ALLOW_MOCK_PAYMENTS=true is set on purpose for a private test.
+ */
+function mockAllowed() {
+  const s = secret();
+  if (s.length < 16 || s === "change-me-dev-only") return false;
+  return process.env.NODE_ENV !== "production" || process.env.ALLOW_MOCK_PAYMENTS === "true";
+}
+
 export function signMockEvent(body: string): string {
   return hmacHex("sha256", secret(), body);
 }
@@ -25,7 +35,7 @@ export function signMockEvent(body: string): string {
 export const mockProvider: PaymentProvider = {
   key: "mock",
   label: "Mock payments (development only)",
-  configured: () => secret().length >= 16,
+  configured: () => mockAllowed(),
   async createCheckout(input) {
     return { url: `/pay/mock/${encodeURIComponent(input.reference)}` };
   },

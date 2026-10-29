@@ -138,4 +138,4 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   return out;
 }
 
-export type ActionState = { ok?: boolean; error?: string; fieldErrors?: Record<string, string>; message?: string } | null;
+export type ActionState = { ok?: boolean; error?: string; fieldErrors?: Record<string, string>; message?: string; redirectTo?: string } | null;

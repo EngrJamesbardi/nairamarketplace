@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 import { friendlyError } from "@/lib/errors";
 import { normalisePhone } from "@/lib/countries";
 import { verifyUploadedImage } from "@/lib/storage";
+import { safeNextPath } from "@/lib/safe-path";
 import { sellerOnboardingSchema, fieldErrors, type ActionState } from "@/lib/validation";
 
 export async function saveSellerProfile(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -75,7 +76,7 @@ export async function saveSellerProfile(_: ActionState, formData: FormData): Pro
   revalidatePath(`/s/${v.slug}`);
   revalidatePath("/dashboard");
   const next = String(formData.get("next") ?? "");
-  if (!seller) redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard?welcome=1");
+  if (!seller) redirect(safeNextPath(next, "/dashboard?welcome=1"));
   return { ok: true, message: "Storefront saved." };
 }
 
