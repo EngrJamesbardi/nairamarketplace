@@ -23,7 +23,33 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "blocked_users": {
+            "admin_audit_logs": {
+                  Row: {
+                    "action": string,"actor_id": string | null,"created_at": string,"details": NonNullable<Json>,"id": number,"target_id": string | null,"target_type": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"actor_id"?: string | null,"created_at"?: string,"details"?: NonNullable<Json>,"id"?: never,"target_id"?: string | null,"target_type"?: string | null
+                  }
+                  Update: {
+                    "action"?: string,"actor_id"?: string | null,"created_at"?: string,"details"?: NonNullable<Json>,"id"?: never,"target_id"?: string | null,"target_type"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "admin_audit_logs_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "admin_audit_logs_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"blocked_users": {
                   Row: {
                     "blocked_id": string,"blocker_id": string,"created_at": string,"reason": string | null
                   }
@@ -348,6 +374,12 @@ isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "listings_seller_shop_fkey"
+      columns: ["seller_id"]
+isOneToOne: false
+      referencedRelation: "seller_profiles"
+      referencedColumns: ["user_id"]
+    },{
       foreignKeyName: "listings_sold_to_fkey"
       columns: ["sold_to"]
 isOneToOne: false
@@ -402,6 +434,38 @@ isOneToOne: false
       columns: ["sender_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"moderation_actions": {
+                  Row: {
+                    "action": string,"created_at": string,"id": number,"moderator_id": string | null,"reason": string | null,"report_id": string | null,"target_id": string,"target_type": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"created_at"?: string,"id"?: never,"moderator_id"?: string | null,"reason"?: string | null,"report_id"?: string | null,"target_id": string,"target_type": string
+                  }
+                  Update: {
+                    "action"?: string,"created_at"?: string,"id"?: never,"moderator_id"?: string | null,"reason"?: string | null,"report_id"?: string | null,"target_id"?: string,"target_type"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "moderation_actions_moderator_id_fkey"
+      columns: ["moderator_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "moderation_actions_moderator_id_fkey"
+      columns: ["moderator_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "moderation_actions_report_id_fkey"
+      columns: ["report_id"]
+isOneToOne: false
+      referencedRelation: "reports"
       referencedColumns: ["id"]
     }
                   ]
@@ -809,6 +873,38 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"seller_verifications": {
+                  Row: {
+                    "business_name": string | null,"created_at": string,"decision_note": string | null,"id": string,"kind": string,"notes": string | null,"registration_number": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"seller_id": string,"status": Database["public"]['Enums']["verification_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "business_name"?: string | null,"created_at"?: string,"decision_note"?: string | null,"id"?: string,"kind"?: string,"notes"?: string | null,"registration_number"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"seller_id": string,"status"?: Database["public"]['Enums']["verification_status"]
+                  }
+                  Update: {
+                    "business_name"?: string | null,"created_at"?: string,"decision_note"?: string | null,"id"?: string,"kind"?: string,"notes"?: string | null,"registration_number"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"seller_id"?: string,"status"?: Database["public"]['Enums']["verification_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "seller_verifications_reviewed_by_fkey"
+      columns: ["reviewed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "seller_verifications_reviewed_by_fkey"
+      columns: ["reviewed_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "seller_verifications_seller_id_fkey"
+      columns: ["seller_id"]
+isOneToOne: false
+      referencedRelation: "seller_profiles"
+      referencedColumns: ["user_id"]
+    }
+                  ]
                 },"user_roles": {
                   Row: {
                     "granted_at": string,"granted_by": string | null,"role": Database["public"]['Enums']["app_role"],"user_id": string
@@ -886,6 +982,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "listings_seller_shop_fkey"
+      columns: ["seller_id"]
+isOneToOne: false
+      referencedRelation: "seller_profiles"
+      referencedColumns: ["user_id"]
     }
                   ]
                 },"public_profiles": {
@@ -934,14 +1036,64 @@ isOneToOne: false
             "_assert_can_interact":
 { Args: { "p_other": string,"p_user": string }; Returns: undefined
                            },
+"_audit":
+{ Args: { "p_action": string,"p_details"?: Json,"p_target_id": string,"p_target_type": string }; Returns: undefined
+                           },
 "_expire_if_due":
 { Args: { "p_offer": string }; Returns: boolean
                            },
 "_post_message":
 { Args: { "p_body": string,"p_conversation": string,"p_kind": string,"p_offer"?: string,"p_sender": string }; Returns: string
                            },
+"_require_admin":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"_require_staff":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "active_listing_limit":
 { Args: { "p_country": string,"p_user": string }; Returns: number
+                           },
+"admin_feature_seller":
+{ Args: { "p_featured": boolean,"p_seller": string }; Returns: undefined
+                           },
+"admin_list_users":
+{ Args: { "p_limit"?: number,"p_offset"?: number,"p_query"?: string,"p_status"?: Database["public"]['Enums']["account_status"] }; Returns: {
+              "country_code": string,"created_at": string,"display_name": string,"email": string,"id": string,"last_sign_in_at": string,"listing_count": number,"report_count": number,"roles": (string)[],"shop_name": string,"shop_slug": string,"status": Database["public"]['Enums']["account_status"],"suspended_reason": string
+            }[]
+                           },
+"admin_review_verification":
+{ Args: { "p_approve": boolean,"p_id": string,"p_note": string }; Returns: undefined
+                           },
+"admin_set_policy":
+{ Args: { "p_body": string,"p_country": string,"p_kind": string,"p_title": string }; Returns: undefined
+                           },
+"admin_set_prohibited_term":
+{ Args: { "p_action": string,"p_country": string,"p_delete"?: boolean,"p_reason": string,"p_term": string }; Returns: undefined
+                           },
+"admin_set_review_status":
+{ Args: { "p_reason": string,"p_review": string,"p_status": string }; Returns: undefined
+                           },
+"admin_set_role":
+{ Args: { "p_grant": boolean,"p_role": Database["public"]['Enums']["app_role"],"p_user": string }; Returns: undefined
+                           },
+"admin_set_setting":
+{ Args: { "p_key": string,"p_value": Json }; Returns: undefined
+                           },
+"admin_set_user_status":
+{ Args: { "p_reason"?: string,"p_status": Database["public"]['Enums']["account_status"],"p_until"?: string,"p_user": string }; Returns: undefined
+                           },
+"admin_stats":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"admin_update_country":
+{ Args: { "p_code": string,"p_patch": Json }; Returns: undefined
+                           },
+"admin_upsert_category":
+{ Args: { "p_active": boolean,"p_icon": string,"p_id": number,"p_name": string,"p_parent": number,"p_slug": string,"p_sort": number }; Returns: number
+                           },
+"anonymise_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "assert_rate":
 { Args: { "p_count": number,"p_limit": number,"p_what": string }; Returns: undefined
@@ -1016,14 +1168,26 @@ isOneToOne: false
               "action": string,"term": string
             }[]
                            },
+"moderate_listing":
+{ Args: { "p_action": string,"p_listing": string,"p_reason"?: string,"p_report"?: string }; Returns: undefined
+                           },
 "notify":
 { Args: { "p_body": string,"p_data"?: Json,"p_kind": string,"p_link": string,"p_title": string,"p_user": string }; Returns: undefined
+                           },
+"purge_expired_data":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "record_listing_view":
 { Args: { "p_listing": string,"p_viewer_key": string }; Returns: undefined
                            },
 "renew_listing":
 { Args: { "p_listing": string }; Returns: undefined
+                           },
+"request_seller_verification":
+{ Args: { "p_business_name": string,"p_notes": string,"p_registration_number": string }; Returns: string
+                           },
+"resolve_report":
+{ Args: { "p_note": string,"p_report": string,"p_status": Database["public"]['Enums']["report_status"] }; Returns: undefined
                            },
 "respond_offer":
 { Args: { "p_action": string,"p_counter_amount_minor"?: number,"p_note"?: string,"p_offer": string }; Returns: string

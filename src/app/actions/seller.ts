@@ -1,4 +1,5 @@
 "use server";
+import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
@@ -76,4 +77,22 @@ export async function saveSellerProfile(_: ActionState, formData: FormData): Pro
   const next = String(formData.get("next") ?? "");
   if (!seller) redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard?welcome=1");
   return { ok: true, message: "Storefront saved." };
+}
+
+const verificationSchema = z.object({
+  businessName: z.string().trim().min(2, "Enter the registered business name").max(120),
+  registrationNumber: z.string().trim().min(3, "Enter the registration number").max(60),
+  notes: z.string().trim().max(1000).optional(),
+});
+
+export async function requestVerification(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, user } = await getSession();
+  if (!user) return { error: "Please sign in again." };
+  const parsed = verificationSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const { error } = await supabase.rpc("request_seller_verification", { p_business_name: v.businessName, p_registration_number: v.registrationNumber, p_notes: v.notes ?? "" });
+  if (error) return { error: friendlyError(error) };
+  revalidatePath("/dashboard/verification");
+  return { ok: true, message: "Request sent. We'll notify you when it's reviewed." };
 }

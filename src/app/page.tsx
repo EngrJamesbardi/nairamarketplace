@@ -10,7 +10,8 @@ import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { countryFlag } from "@/lib/countries";
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
+  const { deleted } = await searchParams;
   const [country, categories, session, tagline] = await Promise.all([
     getSelectedCountry(),
     getCategories(),
@@ -42,6 +43,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      {deleted && <p role="status" className="bg-success/10 px-4 py-3 text-center text-sm text-success">Your account has been deleted. Thank you for using Naira Marketplace.</p>}
       <section className="border-b border-line bg-cream">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 md:grid-cols-[1.4fr_1fr] md:py-12">
           <div>

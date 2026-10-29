@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Package, MessageCircle, HandCoins, Coins, Megaphone, Crown, Store, Plus } from "lucide-react";
+import { BarChart3, Package, MessageCircle, HandCoins, Coins, Megaphone, Crown, Store, Plus, BadgeCheck } from "lucide-react";
 
 const items = [
   { href: "/dashboard", label: "Overview", icon: BarChart3, exact: true },
@@ -11,6 +11,7 @@ const items = [
   { href: "/dashboard/credits", label: "Credits", icon: Coins },
   { href: "/dashboard/promotions", label: "Promotions", icon: Megaphone },
   { href: "/dashboard/plan", label: "Plan", icon: Crown },
+  { href: "/dashboard/verification", label: "Verification", icon: BadgeCheck },
   { href: "/onboarding/seller", label: "Storefront settings", icon: Store },
 ];
 

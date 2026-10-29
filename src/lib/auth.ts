@@ -41,3 +41,10 @@ export async function requireSeller(next = "/dashboard") {
   if (!s.seller) redirect(`/onboarding/seller?next=${encodeURIComponent(next)}`);
   return s as typeof s & { seller: NonNullable<typeof s.seller> };
 }
+
+/** Administrator only (moderators are redirected). */
+export async function requireAdminOnly() {
+  const s = await requireAdmin();
+  if (!s.roles.includes("admin")) redirect("/admin");
+  return s;
+}

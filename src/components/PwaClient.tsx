@@ -9,6 +9,10 @@ export function PwaClient() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
+    // Marks the page as interactive once the browser is idle after hydration (used by end-to-end tests).
+    const markHydrated = () => (document.documentElement.dataset.hydrated = "1");
+    if ("requestIdleCallback" in window) requestIdleCallback(markHydrated, { timeout: 2000 });
+    else setTimeout(markHydrated, 200);
     setOffline(!navigator.onLine);
     setCachedCopy(document.body.dataset.offlineCache === "true");
     const on = () => setOffline(false);

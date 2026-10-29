@@ -46,3 +46,18 @@ export const PNG_1x1 = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
 );
+
+/** Service-role client for test fixtures only (reads the local .env.local; never used by the app's browser code). */
+export async function serviceClient() {
+  const { readFileSync } = await import("node:fs");
+  const { createClient } = await import("@supabase/supabase-js");
+  const env = Object.fromEntries(
+    readFileSync(".env.local", "utf8").split("\n").filter((l) => l.includes("=") && !l.startsWith("#")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]),
+  );
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+}
+
+/** Wait until React has hydrated the current page, so clicks reach client handlers. */
+export async function hydrated(page: Page) {
+  await page.locator("html[data-hydrated]").waitFor({ state: "attached" });
+}

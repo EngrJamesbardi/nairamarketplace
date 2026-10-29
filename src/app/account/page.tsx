@@ -40,7 +40,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <Link href="/auth/forgot" className="link text-sm">Change password (we&apos;ll email you a link)</Link>
         <Link href="/account/blocked" className="link block text-sm">Blocked members</Link>
       </section>
-      <PrivacySection />
+      <PrivacySection status={profile?.status ?? "active"} />
       <form action={signOut}><SignOutButton><LogOut className="size-4" aria-hidden /> Sign out</SignOutButton></form>
     </div>
   );
