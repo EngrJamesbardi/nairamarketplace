@@ -67,7 +67,7 @@ select throws_ok(
 select throws_ok(
   $$update seller_profiles set verification_status = 'verified' where user_id = auth.uid()$$,
   '42501', null, 'Seller cannot mark themselves verified');
-select is((select count(*)::int from profiles), 1, 'User can only read their own private profile row');
+select throws_ok($$select phone from profiles$$, '42501', null, 'Private profile columns (phone) are not readable directly');
 
 -- ---------- Guest ----------
 reset role;

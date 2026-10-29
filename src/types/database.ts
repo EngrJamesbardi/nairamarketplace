@@ -161,6 +161,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "conversations_seller_shop_fkey"
+      columns: ["seller_id"]
+isOneToOne: false
+      referencedRelation: "seller_profiles"
+      referencedColumns: ["user_id"]
     }
                   ]
                 },"countries": {
@@ -946,6 +952,35 @@ isOneToOne: false
 "expire_offers":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"get_my_profile":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_url": string | null,
+"bio": string | null,
+"city": string | null,
+"country_code": string | null,
+"created_at": string,
+"deactivated_at": string | null,
+"deletion_requested_at": string | null,
+"display_name": string,
+"id": string,
+"is_seed": boolean,
+"marketing_consent_at": string | null,
+"notification_prefs": NonNullable<Json>,
+"phone": string | null,
+"phone_verified_at": string | null,
+"preferred_language": string,
+"region_id": number | null,
+"status": Database["public"]['Enums']["account_status"],
+"suspended_reason": string | null,
+"suspended_until": string | null,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "profiles"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "has_role":
 { Args: { "p_role": Database["public"]['Enums']["app_role"],"p_user"?: string }; Returns: boolean
                            },

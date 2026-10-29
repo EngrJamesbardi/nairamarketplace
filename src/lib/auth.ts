@@ -2,6 +2,9 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
+
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 /** Current user + profile + roles for this request (cached per request). */
 export const getSession = cache(async () => {
@@ -9,12 +12,13 @@ export const getSession = cache(async () => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null, roles: [] as string[], seller: null };
-  const [{ data: profile }, { data: roles }, { data: seller }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+  if (!user) return { supabase, user: null, profile: null as Profile | null, roles: [] as string[], seller: null };
+  const [{ data: profileRow }, { data: roles }, { data: seller }] = await Promise.all([
+    supabase.rpc("get_my_profile"),
     supabase.from("user_roles").select("role").eq("user_id", user.id),
     supabase.from("seller_profiles").select("*").eq("user_id", user.id).maybeSingle(),
   ]);
+  const profile = (profileRow as unknown as Profile | null)?.id ? (profileRow as unknown as Profile) : null;
   return { supabase, user, profile, roles: (roles ?? []).map((r) => r.role as string), seller };
 });
 
