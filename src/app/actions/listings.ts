@@ -68,8 +68,15 @@ export async function saveListing(_: ActionState, formData: FormData): Promise<A
   const images = formData.getAll("images").filter((x): x is string => typeof x === "string").slice(0, MAX_IMAGES);
   if (v.status === "active" && images.length === 0) return { fieldErrors: { images: "Add at least one photo to publish" }, error: "Add at least one photo." };
 
-  const listingId = String(formData.get("id") ?? "");
-  const isEdit = z.uuid().safeParse(listingId).success;
+  let listingId = String(formData.get("id") ?? "");
+  // One id per form: a double tap, or a retry after a lost redirect, resolves to the listing already created.
+  const requestId = z.uuid().safeParse(formData.get("requestId"));
+  const findByRequest = async () =>
+    requestId.success
+      ? (await supabase.from("listings").select("id").eq("seller_id", user.id).eq("client_request_id", requestId.data).maybeSingle()).data?.id
+      : undefined;
+  if (!z.uuid().safeParse(listingId).success) listingId = (await findByRequest()) ?? "";
+  let isEdit = z.uuid().safeParse(listingId).success;
 
   const row = {
     title: v.title,
@@ -89,6 +96,25 @@ export async function saveListing(_: ActionState, formData: FormData): Promise<A
   };
 
   let id = listingId;
+  if (!isEdit) {
+    const { data: region } = v.regionId ? await supabase.from("regions").select("latitude, longitude").eq("id", v.regionId).maybeSingle() : { data: null };
+    const { data, error } = await supabase
+      .from("listings")
+      .insert({
+        ...row, seller_id: user.id, country_code: seller.country_code, status: v.status, latitude: region?.latitude ?? null, longitude: region?.longitude ?? null,
+        client_request_id: requestId.success ? requestId.data : null,
+      })
+      .select("id")
+      .single();
+    if (data) id = data.id;
+    else {
+      // A simultaneous duplicate submission lost the race to the unique index: continue with the first one.
+      const existing = error?.code === "23505" ? await findByRequest() : undefined;
+      if (!existing) return { error: friendlyError(error) };
+      id = listingId = existing;
+      isEdit = true;
+    }
+  }
   if (isEdit) {
     const { data: current } = await supabase.from("listings").select("seller_id, status").eq("id", listingId).maybeSingle();
     // RLS would also block this; checking here gives a clear error.
@@ -96,15 +122,6 @@ export async function saveListing(_: ActionState, formData: FormData): Promise<A
     const nextStatus = current.status === "draft" ? v.status : current.status;
     const { error } = await supabase.from("listings").update({ ...row, status: nextStatus }).eq("id", listingId);
     if (error) return { error: friendlyError(error) };
-  } else {
-    const { data: region } = v.regionId ? await supabase.from("regions").select("latitude, longitude").eq("id", v.regionId).maybeSingle() : { data: null };
-    const { data, error } = await supabase
-      .from("listings")
-      .insert({ ...row, seller_id: user.id, country_code: seller.country_code, status: v.status, latitude: region?.latitude ?? null, longitude: region?.longitude ?? null })
-      .select("id")
-      .single();
-    if (error) return { error: friendlyError(error) };
-    id = data.id;
   }
 
   const imgErr = await syncImages(supabase, user.id, id, images);
@@ -113,7 +130,9 @@ export async function saveListing(_: ActionState, formData: FormData): Promise<A
   revalidatePath(`/listing/${id}`);
   revalidatePath("/dashboard/listings");
   revalidatePath("/");
-  redirect(`/dashboard/listings?saved=${id}`);
+  // Returned rather than redirect(): on phones the streamed redirect response was sometimes dropped, leaving the
+  // seller on a "Saving…" form after the listing had been saved. The form navigates with a full page load instead.
+  return { ok: true, redirectTo: `/dashboard/listings?saved=${id}` };
 }
 
 const transitions: Record<string, { to: ListingStatus; from: ListingStatus[] }> = {

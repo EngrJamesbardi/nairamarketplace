@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/request";
+import { safeNextPath } from "@/lib/safe-path";
 import { signInSchema, signUpSchema, passwordSchema, fieldErrors, type ActionState } from "@/lib/validation";
 
 const site = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const safeNext = (n: unknown) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : "/");
 
 export async function signUp(_: ActionState, formData: FormData): Promise<ActionState> {
   const ip = await clientIp();
@@ -45,7 +45,7 @@ export async function signIn(_: ActionState, formData: FormData): Promise<Action
     return { error: "Incorrect email or password." };
   }
   revalidatePath("/", "layout");
-  redirect(safeNext(formData.get("next")));
+  redirect(safeNextPath(formData.get("next")));
 }
 
 export async function signOut() {

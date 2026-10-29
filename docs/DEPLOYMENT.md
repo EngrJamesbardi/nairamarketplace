@@ -46,6 +46,7 @@ Any Node 20+ host works (Vercel, Render, Fly.io, a VPS with `npm run build && np
 | `PAYMENTS_ENABLED_PROVIDERS` | e.g. `paystack`. **Never include `mock` in production** |
 | `PAYSTACK_SECRET_KEY` | Secret. Needed for Paystack (see EXTERNAL_SERVICES.md) |
 | `MOCK_PAYMENT_WEBHOOK_SECRET` | Development only |
+| `ALLOW_MOCK_PAYMENTS` | **Leave unset.** Production builds refuse the mock provider unless this is `true` (private local tests only) |
 | `CRON_SECRET` | 32+ random characters |
 | `ANALYTICS_SALT` | Random; used to hash viewer keys for sponsored-event de-duplication |
 | `RATE_LIMIT_SCALE` | **Leave unset** in production (test-only multiplier) |

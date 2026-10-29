@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { requireSeller } from "@/lib/auth";
 import { getCategories, getCountries, getRegions } from "@/lib/market";
 import { ListingForm } from "@/components/ListingForm";
@@ -13,7 +14,7 @@ export default async function NewListing() {
       <h1 className="h1 mb-1">New listing</h1>
       <p className="mb-6 text-sm text-muted">Listing is free. Prices are shown in {country.currency_code} for buyers in {country.name}.</p>
       <ListingForm userId={user.id} categories={categories} regions={regions} currency={country.currency_code} regionLabel={country.region_label}
-        sellerDefaults={{ regionId: seller.region_id, city: seller.city, deliveryOptions: seller.delivery_options }} />
+        sellerDefaults={{ regionId: seller.region_id, city: seller.city, deliveryOptions: seller.delivery_options }} requestId={randomUUID()} />
     </div>
   );
 }
