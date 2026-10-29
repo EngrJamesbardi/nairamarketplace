@@ -1,26 +1,126 @@
 @import "tailwindcss";
 
+/*
+ * Naira Marketplace design tokens. All brand colours live here; components use the
+ * semantic Tailwind utilities generated from @theme (bg-brand, text-ink, border-line ...).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand: #b84a24;          /* primary burnt orange */
+  --brand-strong: #96391c;   /* hover / pressed */
+  --cream: #fff0e7;          /* warm cream: selected + supporting surfaces */
+  --ink: #282522;            /* charcoal: headings + body text */
+  --amber: #e5a16d;          /* market amber: restrained accents */
+  --surface: #ffffff;        /* cards */
+  --canvas: #f3f1ee;         /* soft grey page background */
+  --muted: #6b655f;          /* muted text (spec #706A65 darkened slightly to pass 4.5:1 on #F3F1EE) */
+  --line: #e5ded8;           /* borders */
+  --success: #237a4b;
+  --warning: #a65c00;
+  --danger: #b42318;
+  --on-brand: #ffffff;
+  --focus: #b84a24;
+  --sponsored-bg: #fdf3e3;
+  --sponsored-fg: #7a4300;
+}
+
+/* Deliberate dark palette (opt-in). Burnt orange is lightened for contrast on dark surfaces. */
+:root[data-theme="dark"] {
+  --brand: #e0703f;
+  --brand-strong: #f08a5b;
+  --cream: #3a2a22;
+  --ink: #f5efe9;
+  --amber: #e5a16d;
+  --surface: #221f1c;
+  --canvas: #171513;
+  --muted: #b7ada4;
+  --line: #3b3530;
+  --success: #4cc283;
+  --warning: #e9a23b;
+  --danger: #f97066;
+  --on-brand: #1a1210;
+  --focus: #f08a5b;
+  --sponsored-bg: #3b2c12;
+  --sponsored-fg: #f5c77e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-amber: var(--amber);
+  --color-surface: var(--surface);
+  --color-canvas: var(--canvas);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-on-brand: var(--on-brand);
+  --color-sponsored-bg: var(--sponsored-bg);
+  --color-sponsored-fg: var(--sponsored-fg);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 0.875rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-on-brand hover:bg-brand-strong active:bg-brand-strong;
+}
+@utility btn-secondary {
+  @apply btn border border-line bg-surface text-ink hover:border-brand hover:text-brand;
+}
+@utility btn-ghost {
+  @apply btn text-ink hover:bg-cream;
+}
+@utility btn-danger {
+  @apply btn bg-danger text-white hover:opacity-90;
+}
+@utility input {
+  @apply block min-h-11 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30;
+}
+@utility label {
+  @apply mb-1 block text-sm font-medium text-ink;
+}
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-line bg-surface;
+}
+@utility chip {
+  @apply inline-flex min-h-9 items-center gap-1 rounded-full border border-line bg-surface px-3 text-sm text-ink hover:border-brand;
+}
+@utility chip-active {
+  @apply border-brand bg-cream font-semibold text-brand-strong;
+}
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold;
+}
+@utility link {
+  @apply font-medium text-brand underline-offset-2 hover:text-brand-strong hover:underline;
+}
+@utility page {
+  @apply mx-auto w-full max-w-6xl px-4 py-6;
+}
+@utility h1 {
+  @apply text-2xl font-bold tracking-tight text-ink sm:text-3xl;
+}
+@utility h2 {
+  @apply text-lg font-bold text-ink sm:text-xl;
 }

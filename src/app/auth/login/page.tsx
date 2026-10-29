@@ -1,0 +1,19 @@
+import Link from "next/link";
+import { AuthCard } from "@/components/AuthCard";
+import { LoginForm } from "./form";
+
+export const metadata = { title: "Sign in", robots: { index: false } };
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; verified?: string }> }) {
+  const sp = await searchParams;
+  const next = sp.next?.startsWith("/") && !sp.next.startsWith("//") ? sp.next : "/";
+  return (
+    <AuthCard title="Welcome back" subtitle="Sign in to message sellers, make offers and manage your shop.">
+      {sp.error === "link" && <p role="alert" className="rounded-lg bg-danger/5 p-3 text-sm text-danger">That link is invalid or has expired. Please try again.</p>}
+      <LoginForm next={next} />
+      <p className="text-center text-sm text-muted">
+        New here? <Link href={`/auth/register${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="link">Create a free account</Link>
+      </p>
+    </AuthCard>
+  );
+}
