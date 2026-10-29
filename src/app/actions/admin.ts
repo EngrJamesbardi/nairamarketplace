@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { friendlyError } from "@/lib/errors";
+import { parseToMinor } from "@/lib/money";
 
 /**
  * Single entry point for admin forms (posted natively to /admin/op, see route.ts). Authorisation happens twice: requireAdmin() here, and the
@@ -39,6 +40,31 @@ const ops = {
   "term.set": z.object({ country: z.string().regex(/^[A-Z]{2}$/).optional().or(z.literal("").transform(() => undefined)), term: z.string().trim().min(2).max(80), action: z.enum(["review", "block"]), reason: text(200) }),
   "term.delete": z.object({ country: z.string().regex(/^[A-Z]{2}$/).optional().or(z.literal("").transform(() => undefined)), term: z.string().trim().min(2).max(80) }),
   "policy.set": z.object({ country: z.string().regex(/^[A-Z]{2}$/).optional().or(z.literal("").transform(() => undefined)), kind: z.enum(["prohibited_items", "safety", "terms_addendum", "privacy_addendum"]), title: z.string().trim().min(3).max(120), body: z.string().trim().min(10).max(10000) }),
+  "package.upsert": z.object({
+    id: uuid.optional().or(z.literal("").transform(() => undefined)),
+    country: z.string().regex(/^[A-Z]{2}$/),
+    name: z.string().trim().min(2).max(60),
+    credits: z.coerce.number().int().min(1).max(100000),
+    price: z.string().trim().regex(/^\d+(\.\d{1,2})?$/, "Enter a price like 2500 or 2500.00"),
+    active: z.enum(["on"]).optional(),
+    sort: z.coerce.number().int().min(0).max(1000).default(0),
+  }),
+  "plan.upsert": z.object({
+    id: uuid.optional().or(z.literal("").transform(() => undefined)),
+    country: z.string().regex(/^[A-Z]{2}$/),
+    code: z.string().trim().regex(/^[a-z0-9-]{2,40}$/),
+    name: z.string().trim().min(2).max(60),
+    description: text(500),
+    price: z.string().trim().regex(/^\d+(\.\d{1,2})?$/, "Enter a price like 3000 or 3000.00"),
+    period_days: z.coerce.number().int().min(1).max(366),
+    listing_limit: z.coerce.number().int().min(1).max(100000),
+    monthly_credits: z.coerce.number().int().min(0).max(100000),
+    active: z.enum(["on"]).optional(),
+    sort: z.coerce.number().int().min(0).max(1000).default(0),
+  }),
+  "promo_price.set": z.object({ country: z.string().regex(/^[A-Z]{2}$/), placement: z.enum(["search", "homepage", "category"]), credits_per_day: z.coerce.number().int().min(1).max(10000) }),
+  "credits.adjust": z.object({ id: uuid, delta: z.coerce.number().int().min(-100000).max(100000).refine((n) => n !== 0, "Enter a non-zero amount"), reason: z.string().trim().min(3).max(300), request_id: uuid }),
+  "campaign.status": z.object({ id: uuid, status: z.enum(["paused", "active", "removed"]), note: text(300) }),
   "setting.set": z.object({ key: z.enum(["tagline", "positioning", "max_sponsored_per_page"]), value: z.string().trim().min(1).max(300) }),
 } as const;
 
@@ -109,6 +135,32 @@ export async function runAdminOp(formData: FormData): Promise<string> {
       break;
     case "policy.set":
       res = await supabase.rpc("admin_set_policy", { p_country: (v.country ?? undefined) as unknown as string, p_kind: v.kind, p_title: v.title, p_body: v.body });
+      break;
+    case "package.upsert": {
+      const { data: c } = await supabase.from("countries").select("currency_code").eq("code", v.country).single();
+      res = await supabase.rpc("admin_upsert_package", {
+        p_id: (v.id ?? undefined) as unknown as string, p_country: v.country, p_name: v.name, p_credits: v.credits,
+        p_price_minor: Number(parseToMinor(v.price, c?.currency_code ?? "NGN")), p_active: v.active === "on", p_sort: v.sort,
+      });
+      break;
+    }
+    case "plan.upsert": {
+      const { data: c } = await supabase.from("countries").select("currency_code").eq("code", v.country).single();
+      res = await supabase.rpc("admin_upsert_plan", {
+        p_id: (v.id ?? undefined) as unknown as string, p_country: v.country, p_code: v.code, p_name: v.name, p_description: v.description ?? "",
+        p_price_minor: Number(parseToMinor(v.price, c?.currency_code ?? "NGN")), p_period_days: v.period_days, p_listing_limit: v.listing_limit,
+        p_monthly_credits: v.monthly_credits, p_active: v.active === "on", p_sort: v.sort,
+      });
+      break;
+    }
+    case "promo_price.set":
+      res = await supabase.rpc("admin_set_promotion_price", { p_country: v.country, p_placement: v.placement, p_credits_per_day: v.credits_per_day });
+      break;
+    case "credits.adjust":
+      res = await supabase.rpc("admin_adjust_credits", { p_user: v.id, p_delta: v.delta, p_reason: v.reason, p_request_id: v.request_id });
+      break;
+    case "campaign.status":
+      res = await supabase.rpc("admin_set_campaign_status", { p_id: v.id, p_status: v.status, p_note: v.note ?? "" });
       break;
     case "setting.set": {
       const value = v.key === "max_sponsored_per_page" ? Number(v.value) : v.value;

@@ -74,7 +74,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const hasMore = rows.length > PAGE_SIZE;
   const results = rows.slice(0, PAGE_SIZE);
 
-  const sponsored = page === 1 ? await getSponsored("search", country.code, { category, query: q, limit: 2 }) : [];
+  const sponsored = page === 1 ? await getSponsored(category && !q ? "category" : "search", country.code, { category, query: q, limit: 2 }) : [];
   const favs = await favouriteIds(session.user?.id, [...results.map((r) => r.id), ...sponsored.map((s) => s.item.id)]);
 
   const topCats = categories.filter((c) => !c.parent_id);

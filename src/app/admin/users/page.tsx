@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/auth";
 import { Op, Flash, small, smallDanger } from "../ui";
 
@@ -47,6 +48,14 @@ export default async function Users({ searchParams }: { searchParams: Promise<SP
                     <Op op="user.role" back={back}>
                       <input type="hidden" name="id" value={u.id} /><input type="hidden" name="role" value="moderator" />
                       <button name="grant" value={u.roles.includes("moderator") ? "0" : "1"} className={small}>{u.roles.includes("moderator") ? "Remove moderator" : "Make moderator"}</button>
+                    </Op>
+                  )}
+                  {isAdmin && (
+                    <Op op="credits.adjust" back={back}>
+                      <input type="hidden" name="id" value={u.id} /><input type="hidden" name="request_id" value={randomUUID()} />
+                      <input name="delta" type="number" required placeholder="± credits" className="input min-h-9 w-24 py-1 text-xs" aria-label="Credit adjustment" />
+                      <input name="reason" required placeholder="Reason" className="input min-h-9 w-28 py-1 text-xs" aria-label="Adjustment reason" />
+                      <button className={small}>Adjust credits</button>
                     </Op>
                   )}
                   {isAdmin && u.shop_slug && (

@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
 import { PwaClient } from "@/components/PwaClient";
+import { ImpressionTracker } from "@/components/ImpressionTracker";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -42,6 +43,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </a>
         <Header />
         <PwaClient />
+        <ImpressionTracker />
         <main id="main" className="flex-1 pb-20 md:pb-0">
           {children}
         </main>

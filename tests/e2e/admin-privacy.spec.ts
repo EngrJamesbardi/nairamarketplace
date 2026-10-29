@@ -15,6 +15,17 @@ test.describe("admin & moderation", () => {
     await expect(page).not.toHaveURL(/\/admin/);
   });
 
+  test("every admin page loads for an administrator", async ({ page }) => {
+    await signIn(page, "admin@naira.test");
+    for (const path of ["/admin", "/admin/listings", "/admin/reports", "/admin/users", "/admin/verifications", "/admin/countries", "/admin/categories",
+      "/admin/policies", "/admin/monetisation", "/admin/campaigns", "/admin/plans", "/admin/payments", "/admin/audit"]) {
+      const res = await page.goto(path);
+      expect(res?.status(), path).toBe(200);
+      await expect(page.getByRole("heading", { level: 1 }), path).toBeVisible();
+      await expect(page.getByText("Something went wrong"), path).toHaveCount(0);
+    }
+  });
+
   test("admin suspends a seller, their shop disappears, the action is audited, then reinstates", async ({ page, browser, baseURL }) => {
     await signIn(page, "admin@naira.test");
     await page.goto("/admin");

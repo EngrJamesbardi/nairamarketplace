@@ -52,6 +52,7 @@ export function ProductCard({
       }`}
       data-testid="product-card"
       data-sponsored={sponsored ? "true" : undefined}
+      data-campaign={sponsored && campaignId ? campaignId : undefined}
     >
       <Link href={href} className="block" prefetch={false}>
         <div className="relative aspect-square bg-canvas">
