@@ -1,22 +1,18 @@
-"use client";
-import { useActionState } from "react";
-import { requestPasswordReset } from "@/app/actions/auth";
 import { AuthCard } from "@/components/AuthCard";
-import { FormMessage, SubmitButton, FieldError } from "@/components/FormStatus";
+import { ForgotForm } from "./form";
 
-export default function ForgotPage() {
-  const [state, action] = useActionState(requestPasswordReset, null);
+export const metadata = { title: "Reset your password", robots: { index: false } };
+
+export default async function ForgotPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   return (
     <AuthCard title="Reset your password" subtitle="We'll email you a link to choose a new password.">
-      <form action={action} className="space-y-4">
-        <div>
-          <label className="label" htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" autoComplete="email" required className="input" />
-          <FieldError state={state} name="email" />
-        </div>
-        <FormMessage state={state} />
-        <SubmitButton className="btn-primary w-full">Send reset link</SubmitButton>
-      </form>
+      {error === "link" && (
+        <p role="alert" className="rounded-lg bg-danger/5 p-3 text-sm text-danger">
+          That reset link is invalid, expired or was already used. Enter your email to get a new one.
+        </p>
+      )}
+      <ForgotForm />
     </AuthCard>
   );
 }

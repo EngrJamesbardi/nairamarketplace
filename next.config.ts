@@ -10,6 +10,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Pin the workspace root so a stray lockfile in a parent folder (e.g. ~/package-lock.json) isn't picked up.
+  outputFileTracingRoot: process.cwd(),
   experimental: {
     serverActions: { bodySizeLimit: "3mb" },
   },

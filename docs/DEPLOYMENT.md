@@ -17,6 +17,9 @@ the owner's approval first.
    - Site URL: `https://<your-domain>`
    - Redirect URLs: `https://<your-domain>/**`
    - Email confirmations: on
+   - Email templates: copy the bodies of `supabase/templates/*.html` into Confirm signup, Reset password, Change email
+     and Magic link. They link to `/auth/callback?token_hash=...`, which works in any browser for the full link lifetime.
+     The default templates use a PKCE link that expires after 5 minutes and fails if opened in another browser.
    - Minimum password length: 8
    - Leaked-password protection: on
    - Custom SMTP: required for real email volume (see EXTERNAL_SERVICES.md)
