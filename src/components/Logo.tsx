@@ -16,12 +16,13 @@ export function LogoMark({ size = 36, className = "" }: { size?: number; classNa
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2 rounded-lg" aria-label="Naira Marketplace home">
+    <Link href="/" className="flex items-center gap-2 rounded-lg" aria-label={compact ? "Naira Marketplace home" : undefined}>
       <LogoMark />
       {!compact && (
         <span className="leading-none">
-          <span className="block text-lg font-extrabold tracking-tight text-ink">Naira</span>
+          <span className="block text-lg font-extrabold tracking-tight text-ink">Naira</span>{" "}
           <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-brand">Marketplace</span>
+          <span className="sr-only"> home</span>
         </span>
       )}
     </Link>

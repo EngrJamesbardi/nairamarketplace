@@ -64,9 +64,9 @@ export function ProductCard({
           )}
           <div className="absolute left-2 top-2 flex flex-wrap gap-1">
             {sponsored && <span className="badge bg-sponsored-bg text-sponsored-fg shadow-sm">{t("listing.sponsored")}</span>}
-            {item.is_seed && <span className="badge bg-ink/80 text-white">{t("listing.demo")}</span>}
+            {item.is_seed && <span className="badge bg-ink/80 text-canvas">{t("listing.demo")}</span>}
             {item.status === "reserved" && <span className="badge bg-warning text-white">Reserved</span>}
-            {item.status === "sold" && <span className="badge bg-ink text-white">Sold</span>}
+            {item.status === "sold" && <span className="badge bg-ink text-canvas">Sold</span>}
           </div>
         </div>
         <div className="flex flex-1 flex-col gap-1 p-3">

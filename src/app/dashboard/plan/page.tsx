@@ -35,7 +35,7 @@ export default async function Plan({ searchParams }: { searchParams: Promise<{ e
         automatically: renew before the end date to keep the higher allowance. If a plan ends, your listings stay up but you can&apos;t
         activate more than the free allowance.
       </p>
-      {provider?.key === "mock" && <p className="text-xs font-semibold text-warning">Payments in this environment use a development mock. No real money is taken.</p>}
+      {provider?.key === "mock" && <p className="rounded-lg border border-warning bg-warning/10 px-3 py-2 text-xs font-semibold text-ink">Payments in this environment use a development mock. No real money is taken.</p>}
       <ul className="grid gap-3 sm:grid-cols-2">
         {(plans ?? []).map((p) => {
           const isCurrent = current?.plan_id === p.id;

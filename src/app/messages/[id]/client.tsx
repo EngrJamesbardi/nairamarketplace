@@ -36,7 +36,8 @@ export function LiveUpdates({ conversationId }: { conversationId: string }) {
     const poll = setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, 20000);
     return () => { cancelled = true; if (channel) supabase.removeChannel(channel); clearInterval(poll); };
   }, [conversationId, router]);
-  useEffect(() => { window.scrollTo({ top: document.body.scrollHeight }); }, []);
+  // Bring the latest message and the composer into view (not the page footer below them).
+  useEffect(() => { document.getElementById("chat-end")?.scrollIntoView({ block: "end" }); }, []);
   return null;
 }
 
@@ -51,7 +52,7 @@ export function Composer({ conversationId }: { conversationId: string }) {
   const router = useRouter();
   useEffect(() => { if (state?.ok) { form.current?.reset(); router.refresh(); } }, [state, router]);
   return (
-    <form ref={form} action={action} className="sticky bottom-16 z-10 space-y-2 bg-canvas pb-2 md:bottom-0">
+    <form ref={form} id="composer" action={action} className="sticky bottom-16 z-10 space-y-2 bg-canvas pb-2 md:bottom-0">
       <input type="hidden" name="conversationId" value={conversationId} />
       <div className="flex items-end gap-2">
         <label htmlFor="body" className="sr-only">Message</label>

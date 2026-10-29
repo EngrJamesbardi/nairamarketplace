@@ -49,7 +49,7 @@ export function PwaClient() {
   return (
     <div aria-live="polite">
       {(offline || cachedCopy) && (
-        <div role="status" className="flex items-center justify-center gap-2 bg-ink px-4 py-2 text-center text-sm text-white" data-testid="offline-banner">
+        <div role="status" className="flex items-center justify-center gap-2 bg-ink px-4 py-2 text-center text-sm text-canvas" data-testid="offline-banner">
           <WifiOff className="size-4" aria-hidden />
           {cachedCopy
             ? "You're viewing a saved copy. Prices and availability may be out of date."

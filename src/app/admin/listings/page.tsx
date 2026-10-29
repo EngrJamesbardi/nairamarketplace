@@ -35,7 +35,7 @@ export default async function ModerationQueue({ searchParams }: { searchParams: 
                 <span className="badge bg-cream text-brand-strong">{l.status}</span>
                 <span className={`badge ${l.moderation_status === "approved" ? "bg-success/10 text-success" : "bg-warning/15 text-warning"}`}>{l.moderation_status}</span>
                 <span className="text-xs text-muted">{l.country_code} · {l.seller?.shop_name} · {new Date(l.created_at).toLocaleString("en-GB")}</span>
-                {l.is_seed && <span className="badge bg-ink/80 text-white">Demo</span>}
+                {l.is_seed && <span className="badge bg-ink/80 text-canvas">Demo</span>}
               </div>
               <PriceTag priceMinor={l.price_minor} currency={l.currency} priceType={l.price_type} country={l.country_code} className="text-sm" />
               <p className="line-clamp-2 text-sm text-muted">{l.description}</p>

@@ -41,7 +41,7 @@ export default async function Credits({ searchParams }: { searchParams: Promise<
 
       <section aria-labelledby="buy-h" className="space-y-3">
         <h2 id="buy-h" className="h2">Buy credits</h2>
-        {provider?.key === "mock" && <p className="text-xs font-semibold text-warning">Payments in this environment use a development mock. No real money is taken.</p>}
+        {provider?.key === "mock" && <p className="rounded-lg border border-warning bg-warning/10 px-3 py-2 text-xs font-semibold text-ink">Payments in this environment use a development mock. No real money is taken.</p>}
         {!provider ? (
           <p className="card p-4 text-sm">Buying credits is not available in {country?.name} yet.</p>
         ) : (

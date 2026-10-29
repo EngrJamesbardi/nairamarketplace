@@ -157,7 +157,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                       {s.verification_status === "verified" && <BadgeCheck className="size-4 text-success" aria-label="Verified" />}
                     </span>
                     <span className="text-xs text-muted">{s.city}</span>
-                    {s.is_seed && <span className="badge bg-ink/80 text-white">Demo</span>}
+                    {s.is_seed && <span className="badge bg-ink/80 text-canvas">Demo</span>}
                   </Link>
                 </li>
               ))}

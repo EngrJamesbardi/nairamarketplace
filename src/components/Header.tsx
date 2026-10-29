@@ -77,13 +77,15 @@ function IconLink({
   return (
     <Link
       href={href}
-      aria-label={count ? `${label} (${count} unread)` : label}
-      className={`relative inline-flex size-11 items-center justify-center rounded-xl text-ink hover:bg-cream hover:text-brand ${className}`}
+      // Display is set by exactly one utility: "inline-flex" alongside "hidden" would win on phones and overflow the header.
+      className={`relative size-11 items-center justify-center rounded-xl text-ink hover:bg-cream hover:text-brand ${className.includes("hidden") ? className : `inline-flex ${className}`}`}
     >
       {children}
+      <span className="sr-only">{label}</span>
       {count > 0 && (
         <span className="absolute right-1 top-1 min-w-5 rounded-full bg-brand px-1 text-center text-[11px] font-bold leading-5 text-on-brand">
           {count > 99 ? "99+" : count}
+          <span className="sr-only"> unread</span>
         </span>
       )}
     </Link>

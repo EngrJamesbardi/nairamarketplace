@@ -51,7 +51,7 @@ export default async function Storefront({ params }: P) {
             <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold">
               {seller.shop_name}
               {seller.verification_status === "verified" && <span className="badge bg-success/10 text-success"><BadgeCheck className="size-4" aria-hidden /> Verified business</span>}
-              {seller.is_seed && <span className="badge bg-ink/80 text-white">Demo</span>}
+              {seller.is_seed && <span className="badge bg-ink/80 text-canvas">Demo</span>}
             </h1>
             <p className="text-sm text-muted">{t(`sellerType.${seller.seller_type}`)} · {followers ?? 0} follower{followers === 1 ? "" : "s"} · {rating?.review_count ? `★ ${rating.avg_rating} (${rating.review_count})` : "No reviews yet"}</p>
             <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">

@@ -121,7 +121,7 @@ export default async function ListingPage({ params }: Params) {
             <div className="flex flex-wrap items-center gap-2">
               <PriceTag priceMinor={listing.price_minor} currency={listing.currency} priceType={listing.price_type} country={listing.country_code} className="text-2xl text-brand-strong" />
               {listing.price_type === "negotiable" && <span className="badge bg-cream text-brand-strong">{t("listing.negotiable")}</span>}
-              {listing.status !== "active" && <span className="badge bg-ink text-white">{t(`status.${listing.status}`)}</span>}
+              {listing.status !== "active" && <span className="badge bg-ink text-canvas">{t(`status.${listing.status}`)}</span>}
             </div>
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div><dt className="text-muted">Condition</dt><dd className="font-medium">{t(`condition.${listing.condition}`)}</dd></div>

@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="page grid gap-6 md:grid-cols-[220px_1fr]">
       <aside className="min-w-0">
-        <div className="mb-3 rounded-xl bg-ink p-3 text-white">
+        <div className="mb-3 rounded-xl bg-ink p-3 text-canvas">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber">Administration</p>
           <p className="text-sm">{roles.includes("admin") ? "Administrator" : "Moderator"}</p>
         </div>

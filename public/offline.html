@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#B84A24">
+<title>Offline · Naira Marketplace</title>
+<!-- Self-contained on purpose (no scripts, no external CSS) so it always renders without a connection. -->
+<style>
+  :root { --brand:#B84A24; --brand-strong:#96391C; --cream:#FFF0E7; --ink:#282522; --muted:#706A65; --canvas:#F3F1EE; }
+  @media (prefers-color-scheme: dark) { :root { --cream:#2A1F1A; --ink:#F4EEE9; --muted:#B5ACA5; --canvas:#1B1816; } }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--canvas); color:var(--ink);
+         font:16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding:24px 16px; }
+  main { max-width:28rem; text-align:center; }
+  h1 { font-size:1.6rem; margin:16px 0 8px; }
+  p { color:var(--muted); margin:0 0 12px; }
+  a.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 20px; border-radius:12px;
+          background:var(--brand); color:#fff; font-weight:600; text-decoration:none; margin-top:8px; }
+  a.btn:hover { background:var(--brand-strong); }
+  a.home { display:block; margin-top:12px; color:var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <svg width="72" height="72" viewBox="0 0 512 512" role="img" aria-label="Naira Marketplace">
+    <rect width="512" height="512" rx="112" fill="#B84A24"/>
+    <path d="M96 112h320v52a32 32 0 0 1-64 0 32 32 0 0 1-64 0 32 32 0 0 1-64 0 32 32 0 0 1-64 0 32 32 0 0 1-64 0z" fill="#FFF0E7"/>
+    <path d="M168 404V246l176 158V246" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M312 270l32-36 32 36" fill="none" stroke="#E5A16D" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <h1>You're offline</h1>
+  <p>This page hasn't been saved on your device yet. Pages you opened recently may still work, but they could be out of date.</p>
+  <p>Messaging, search, posting listings and payments need an internet connection.</p>
+  <a class="btn" href="">Try again</a>
+  <a class="home" href="/">Go to the home page</a>
+</main>
+</body>
+</html>

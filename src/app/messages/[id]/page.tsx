@@ -77,7 +77,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
                   <div className={`mb-1 rounded-lg p-2 ${mine ? "bg-black/15" : "bg-cream"}`} data-testid="offer-card">
                     <p className="text-xs uppercase tracking-wide opacity-80">{offer.parent_offer_id ? "Counter-offer" : "Offer"}</p>
                     <p className="text-lg font-bold">{formatMoney(offer.amount_minor, offer.currency, locale)}{offer.quantity > 1 && <span className="text-sm font-normal"> × {offer.quantity}</span>}</p>
-                    <span className={`badge ${STATUS_STYLE[offer.status]}`} data-testid="offer-status">{offer.status}</span>
+                    <span className={`badge ${mine ? "bg-surface text-ink" : STATUS_STYLE[offer.status]}`} data-testid="offer-status">{offer.status}</span>
                     {offer.note && <p className="mt-1 text-xs">{offer.note}</p>}
                   </div>
                 )}
@@ -106,7 +106,10 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
       {iBlocked ? (
         <p className="card p-3 text-sm text-muted">You blocked this member. Unblock them to send messages.</p>
       ) : (
-        <Composer conversationId={id} />
+        <>
+          <div id="chat-end" className="scroll-mb-36 md:scroll-mb-24" aria-hidden />
+          <Composer conversationId={id} />
+        </>
       )}
     </div>
   );

@@ -15,7 +15,7 @@ export default async function MockCheckout({ params }: { params: Promise<{ refer
   if (!p || p.provider !== "mock") notFound();
   return (
     <div className="page max-w-md space-y-4">
-      <div role="note" className="flex gap-2 rounded-xl border-2 border-dashed border-warning bg-warning/10 p-3 text-sm text-warning">
+      <div role="note" className="flex gap-2 rounded-xl border-2 border-dashed border-warning bg-warning/10 p-3 text-sm text-ink">
         <FlaskConical className="size-5 shrink-0" aria-hidden />
         <p><strong>Development mock checkout.</strong> No real money moves. In production this page is replaced by the payment provider&apos;s own checkout.</p>
       </div>

@@ -4,13 +4,14 @@
  * - Public pages (home, search, listings, storefronts): network-first, falling back to a cached copy
  *   that the page marks as "possibly out of date".
  * - Private/authenticated routes, API calls, Supabase traffic and non-GET requests: never cached.
- * - Navigation failures with no cached copy: custom /offline page.
+ * - Navigation failures with no cached copy: static /offline.html page.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `nm-shell-${VERSION}`;
 const PAGE_CACHE = `nm-pages-${VERSION}`;
 const IMAGE_CACHE = `nm-images-${VERSION}`;
-const OFFLINE_URL = "/offline";
+// Static, script-free fallback: a framework page would try to load code that is not available offline.
+const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png", "/brand/mark.svg", "/manifest.webmanifest"];
 
 // Pages that may contain personal or financial data are never stored.
