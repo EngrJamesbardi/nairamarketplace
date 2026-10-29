@@ -12,6 +12,7 @@ export function minorUnits(currency: string): number {
 
 /** Parse a user-entered major-unit string ("12,500.50") into minor units without floats. */
 export function parseToMinor(input: string, currency: string): bigint | null {
+  if (input.includes("-")) return null; // negative amounts are never valid prices or offers
   const cleaned = input.replace(/[\s,]/g, "").replace(/^[^\d.]+/, "");
   const digits = minorUnits(currency);
   const re = digits > 0 ? new RegExp(`^(\\d{1,13})(?:\\.(\\d{1,${digits}}))?$`) : /^(\d{1,15})$/;

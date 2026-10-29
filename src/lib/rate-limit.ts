@@ -7,7 +7,11 @@
 type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 
-export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfterMs: number } {
+// RATE_LIMIT_SCALE lets local test runs raise limits (e.g. 50). Never set it in production.
+const SCALE = Math.max(1, Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1);
+
+export function rateLimit(key: string, baseLimit: number, windowMs: number): { ok: boolean; retryAfterMs: number } {
+  const limit = baseLimit * SCALE;
   const now = Date.now();
   const b = buckets.get(key);
   if (!b || b.resetAt <= now) {

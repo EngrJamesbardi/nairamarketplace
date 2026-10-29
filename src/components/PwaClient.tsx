@@ -26,9 +26,11 @@ export function PwaClient() {
           });
         });
       });
+      // Reload only after the user accepted an update — never on first install (that would wipe half-filled forms).
       let reloaded = false;
       navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!reloaded) {
+        if (!reloaded && sessionStorage.getItem("nm_sw_update") === "1") {
+          sessionStorage.removeItem("nm_sw_update");
           reloaded = true;
           location.reload();
         }
@@ -53,7 +55,10 @@ export function PwaClient() {
       {waiting && (
         <div role="status" className="flex flex-wrap items-center justify-center gap-3 bg-cream px-4 py-2 text-sm text-ink">
           A new version of Naira Marketplace is ready.
-          <button className="btn-primary min-h-9" onClick={() => waiting.postMessage("SKIP_WAITING")}>
+          <button className="btn-primary min-h-9" onClick={() => {
+              try { sessionStorage.setItem("nm_sw_update", "1"); } catch {}
+              waiting.postMessage("SKIP_WAITING");
+            }}>
             <RefreshCw className="size-4" aria-hidden /> Update now
           </button>
         </div>

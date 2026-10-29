@@ -12,6 +12,8 @@ export default function OfflinePage() {
         screen, but they could be out of date.
       </p>
       <p className="max-w-md text-sm text-muted">Messaging, search, posting listings and payments need an internet connection.</p>
+      {/* Full reload on purpose: retries the network instead of client-side navigation. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a href="/" className="btn-primary">Try again</a>
     </div>
   );
