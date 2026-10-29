@@ -7,6 +7,12 @@ select plan(29);
 \set kwame   '''00000000-0000-4000-8000-000000000004'''
 \set buyer   '''00000000-0000-4000-8000-000000000005'''
 
+-- Start from a clean slate for the demo buyer (inside this rolled-back transaction) so the test
+-- is independent of anything browser tests created.
+delete from reviews where reviewer_id = :buyer;
+delete from conversations where buyer_id = :buyer;
+delete from blocked_users where blocker_id = :buyer or blocked_id = :buyer;
+
 create temp table ids (k text primary key, v uuid);
 grant all on ids to authenticated;
 insert into ids select 'bag', id from listings where title like 'Leather handbag%';
