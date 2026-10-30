@@ -19,5 +19,12 @@ export default defineConfig({
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
-    : { command: "npm run dev", url: "http://localhost:3000", reuseExistingServer: true, timeout: 120_000 },
+    : {
+        command: "npm run dev",
+        url: "http://localhost:3000",
+        reuseExistingServer: true,
+        timeout: 120_000,
+        // The service worker is off under `next dev` unless this is set (the PWA tests need it).
+        env: { NEXT_PUBLIC_PWA_DEV: "1" },
+      },
 });

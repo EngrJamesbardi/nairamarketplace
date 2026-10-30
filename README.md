@@ -71,6 +71,9 @@ E2E_BASE_URL=http://localhost:3000 npm run test:e2e
 npm run test:concurrency      # parallel double-spend / duplicate-webhook checks (writes ledger rows; reset afterwards)
 ```
 
+The service worker is switched off under `npm run dev`, because dev script names don't change between edits and a cached
+copy would run stale code. Test the PWA against the production build, or start the dev server with `NEXT_PUBLIC_PWA_DEV=1`.
+
 Latest results are recorded in [docs/STATUS_REPORT.md](docs/STATUS_REPORT.md).
 
 ## Project layout
