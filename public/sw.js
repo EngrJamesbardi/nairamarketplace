@@ -6,7 +6,7 @@
  * - Private/authenticated routes, API calls, Supabase traffic and non-GET requests: never cached.
  * - Navigation failures with no cached copy: static /offline.html page.
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `nm-shell-${VERSION}`;
 const PAGE_CACHE = `nm-pages-${VERSION}`;
 const IMAGE_CACHE = `nm-images-${VERSION}`;
@@ -18,6 +18,9 @@ const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png", "/b
 const PRIVATE_PREFIXES = ["/account", "/dashboard", "/messages", "/admin", "/favourites", "/following", "/notifications", "/onboarding", "/auth", "/api", "/pay"];
 const PUBLIC_PAGE = /^\/($|search|listing\/|s\/|category\/|legal\/|install|sell$)/;
 const MAX_PAGES = 40;
+// Production build files carry a content hash in their name: chunks/app/page-1a2b3c4d5e6f7a8b.js, css/0f1e2d3c4b5a6978.css,
+// media/e4af272ccee01ff0-s.p.woff2.
+const HASHED_ASSET = /([\/.-][0-9a-f]{8,}\.[a-z0-9]+$)|(\/[0-9a-f]{8,}[-.][^/]*$)/i;
 const MAX_IMAGES = 120;
 
 self.addEventListener("install", (event) => {
@@ -66,7 +69,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/brand/")) {
+  if (url.pathname.startsWith("/_next/static/")) {
+    // Only content-hashed build files are safe to serve cache-first. `next dev` serves unhashed names
+    // (chunks/app/page.js) whose contents change on every edit; caching those breaks the page after an update.
+    if (HASHED_ASSET.test(url.pathname)) event.respondWith(cacheFirst(req, SHELL_CACHE));
+    return;
+  }
+  if (url.pathname.startsWith("/icons/") || url.pathname.startsWith("/brand/")) {
     event.respondWith(cacheFirst(req, SHELL_CACHE));
     return;
   }
