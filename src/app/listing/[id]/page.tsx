@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EditorLink } from "@/components/EditorLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MapPin, BadgeCheck, Truck, Clock, Eye, Heart, MessageCircle, Pencil, Info } from "lucide-react";
@@ -140,7 +141,7 @@ export default async function ListingPage({ params }: Params) {
             <div className="card space-y-2 p-5">
               <p className="font-semibold">This is your listing</p>
               <div className="flex flex-wrap gap-2">
-                <Link href={`/dashboard/listings/${listing.id}/edit`} className="btn-primary"><Pencil className="size-4" aria-hidden /> Manage listing</Link>
+                <EditorLink listingId={listing.id} className="btn-primary"><Pencil className="size-4" aria-hidden /> Manage listing</EditorLink>
                 <Link href="/dashboard/offers" className="btn-secondary">View offers</Link>
               </div>
             </div>
