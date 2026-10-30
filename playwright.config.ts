@@ -18,7 +18,7 @@ export default defineConfig({
   },
   projects: [
     { name: "mobile-chrome", use: { ...devices["Pixel 7"], ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}) } },
-    { name: "desktop-chrome", use: { ...devices["Desktop Chrome"], ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}) }, testMatch: /responsive|pwa|admin/ },
+    { name: "desktop-chrome", use: { ...devices["Desktop Chrome"], ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}) }, testMatch: /responsive|pwa|admin|navigation/ },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
