@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { listingSchema, signUpSchema, sniffImageType, sellerOnboardingSchema } from "@/lib/validation";
+import { listingSchema, signUpSchema, sniffImageType, sellerOnboardingSchema, requiredPhotos, MAX_IMAGES } from "@/lib/validation";
 import { normalisePhone, countryFlag } from "@/lib/countries";
 import { rateLimit, _resetRateLimits } from "@/lib/rate-limit";
 import { friendlyError } from "@/lib/errors";
@@ -82,5 +82,35 @@ describe("error messages", () => {
     expect(friendlyError({ code: "P0409", message: "This offer has expired" })).toBe("This offer has expired");
     expect(friendlyError({ code: "42501", message: 'new row violates row-level security policy for table "listings"' })).toBe("You do not have permission to do that.");
     expect(friendlyError({ code: "XX000", message: "internal" })).toMatch(/Something went wrong/);
+  });
+});
+
+describe("photo requirements", () => {
+  it("needs the category minimum to publish", () => {
+    expect(requiredPhotos(4, { publishing: true, savedCount: 0 })).toBe(4);
+    expect(requiredPhotos(2, { publishing: true, savedCount: 0 })).toBe(2);
+    expect(requiredPhotos(40, { publishing: true, savedCount: 0 })).toBe(MAX_IMAGES);
+  });
+  it("never forces extra photos onto a listing that is already live", () => {
+    expect(requiredPhotos(4, { publishing: false, savedCount: 1 })).toBe(1);
+    expect(requiredPhotos(4, { publishing: false, savedCount: 6 })).toBe(4);
+    expect(requiredPhotos(4, { publishing: false, savedCount: 0 })).toBe(1);
+  });
+  it("allows up to 10 photos per listing", () => expect(MAX_IMAGES).toBe(10));
+});
+
+describe("listing location", () => {
+  const base = { title: "Samsung TV", description: "Working television, 43 inch", categoryId: "1", priceType: "fixed", price: "150000", currency: "NGN",
+    condition: "used_good", quantity: "1", deliveryOptions: ["local_pickup"], status: "active" };
+  it("accepts a state and LGA", () => {
+    const r = listingSchema.safeParse({ ...base, regionId: "5", areaId: "42" });
+    expect(r.success && r.data.regionId === 5 && r.data.areaId === 42).toBe(true);
+  });
+  it("rejects an LGA without a state", () => {
+    const r = listingSchema.safeParse({ ...base, areaId: "42" });
+    expect(r.success).toBe(false);
+  });
+  it("accepts a state without an LGA (markets without LGAs, drafts)", () => {
+    expect(listingSchema.safeParse({ ...base, regionId: "5", areaId: "" }).success).toBe(true);
   });
 });

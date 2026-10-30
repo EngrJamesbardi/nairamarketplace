@@ -7,10 +7,15 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
-  use: { baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000", trace: "retain-on-failure" },
+  use: {
+    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
+    trace: "retain-on-failure",
+    // PW_CHANNEL=chrome runs against the installed Google Chrome instead of Playwright's downloaded Chromium.
+    ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}),
+  },
   projects: [
-    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
-    { name: "desktop-chrome", use: { ...devices["Desktop Chrome"] }, testMatch: /responsive|pwa|admin/ },
+    { name: "mobile-chrome", use: { ...devices["Pixel 7"], ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}) } },
+    { name: "desktop-chrome", use: { ...devices["Desktop Chrome"], ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}) }, testMatch: /responsive|pwa|admin/ },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined

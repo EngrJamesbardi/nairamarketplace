@@ -43,7 +43,7 @@ test("seller buys credits through a verified (mock) payment, promotes a listing,
   await hydrated(page);
   const title = (await page.getByLabel("Listing").locator("option").first().innerText()).trim();
   await page.getByLabel(/Homepage/).check();
-  await page.getByLabel("Days").fill("1");
+  await page.getByLabel("Days", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Start promotion" }).click();
   await expect(page.getByText("Promotion started")).toBeVisible();
   expect(await balance(page)).toBe(start + 50 - 25);

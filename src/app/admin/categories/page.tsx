@@ -24,10 +24,26 @@ export default async function Categories({ searchParams }: { searchParams: Promi
     <>
       <h1 className="h1">Categories</h1>
       <Flash sp={sp} />
+      <p className="text-sm text-muted">
+        &ldquo;Photos needed to publish&rdquo; applies to the category and its subcategories (maximum 10 photos per listing). The default is 4; food,
+        books and beauty start at 2 because four distinct photos of a bag of rice or a paperback rarely help buyers. Existing live listings are
+        never unpublished by a change here.
+      </p>
       <section className="card p-4"><h2 className="mb-2 font-semibold">New category</h2><Row /></section>
       <ul className="space-y-2">
         {(cats ?? []).sort((a, b) => (a.parent_id ?? a.id) - (b.parent_id ?? b.id) || (a.parent_id ? 1 : -1)).map((c) => (
-          <li key={c.id} className={`card p-3 ${c.parent_id ? "ml-6" : ""}`}><Row c={c} /></li>
+          <li key={c.id} className={`card space-y-2 p-3 ${c.parent_id ? "ml-6" : ""}`}>
+            <Row c={c} />
+            {!c.parent_id && (
+              <Op op="category.min_images" back="/admin/categories">
+                <input type="hidden" name="id" value={c.id} />
+                <label className="flex items-center gap-2 text-xs">Photos needed to publish
+                  <input name="min_images" type="number" min={1} max={10} defaultValue={c.min_images} className="input min-h-9 w-20 py-1" />
+                </label>
+                <button className={smallPrimary}>Save</button>
+              </Op>
+            )}
+          </li>
         ))}
       </ul>
     </>

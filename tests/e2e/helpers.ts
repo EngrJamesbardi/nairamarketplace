@@ -61,3 +61,12 @@ export async function serviceClient() {
 export async function hydrated(page: Page) {
   await page.locator("html[data-hydrated]").waitFor({ state: "attached" });
 }
+
+/** Upload `n` small photos through the listing photo picker and wait for their previews. */
+export async function addPhotos(page: Page, n: number) {
+  const before = await page.getByTestId("images-item").count();
+  await page.getByTestId("images-input").setInputFiles(
+    Array.from({ length: n }, (_, i) => ({ name: `photo-${i + 1}.png`, mimeType: "image/png", buffer: PNG_1x1 })),
+  );
+  await expect(page.getByTestId("images-item")).toHaveCount(before + n);
+}

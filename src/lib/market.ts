@@ -37,6 +37,14 @@ export const getRegions = cache(async (country: string) => {
   return data ?? [];
 });
 
+/** Second-level divisions (e.g. LGAs) of one region. Empty for markets without that data. */
+export const getAreas = cache(async (regionId: number | null | undefined) => {
+  if (!regionId) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.from("areas").select("id, name").eq("region_id", regionId).eq("is_active", true).order("name");
+  return data ?? [];
+});
+
 export const getSetting = cache(async <T,>(key: string, fallback: T): Promise<T> => {
   const supabase = await createClient();
   const { data } = await supabase.from("platform_settings").select("value").eq("key", key).maybeSingle();

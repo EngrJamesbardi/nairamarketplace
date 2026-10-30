@@ -1,7 +1,7 @@
 import Link from "next/link";
 import * as Icons from "lucide-react";
 import { ArrowRight, Plus, BadgeCheck, MapPin } from "lucide-react";
-import { SearchBar } from "@/components/SearchBar";
+import { LocationSearch } from "@/components/LocationSearch";
 import { ProductCard, ProductGrid, EmptyState } from "@/components/ProductCard";
 import { getCategories, getSelectedCountry, getSetting, getRegions } from "@/lib/market";
 import { discover, favouriteIds } from "@/lib/listings";
@@ -55,7 +55,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               Find what you need from traders, shops and neighbours. Message sellers, make offers and agree your own
               payment and delivery. Free to browse, free to list.
             </p>
-            <SearchBar className="mt-5 hidden max-w-xl md:block" />
           </div>
           <div className="flex flex-col justify-center gap-3 rounded-2xl bg-surface p-5 shadow-sm">
             <p className="text-lg font-bold">Got something to sell?</p>
@@ -64,6 +63,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <Plus className="size-4" aria-hidden /> Sell an item
             </Link>
           </div>
+          <LocationSearch className="md:col-span-2" categories={topCategories} regions={regions} regionLabel={country.region_label} areaLabel={country.area_label} />
         </div>
       </section>
 

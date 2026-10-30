@@ -32,6 +32,21 @@ export async function signUp(_: ActionState, formData: FormData): Promise<Action
   redirect(`/auth/check-email?email=${encodeURIComponent(email)}`);
 }
 
+export async function resendConfirmation(_: ActionState, formData: FormData): Promise<ActionState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { fieldErrors: { email: "Enter a valid email address" } };
+  const ip = await clientIp();
+  if (!rateLimit(`resend:${ip}`, 10, 60 * 60 * 1000).ok || !rateLimit(`resend:${email}`, 3, 15 * 60 * 1000).ok)
+    return { error: "Too many requests. Please wait 15 minutes before asking for another email." };
+  const supabase = await createClient();
+  await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${site()}/auth/callback?next=/onboarding/welcome` } });
+  // Same response whether the account exists, is unverified or is already verified.
+  return {
+    ok: true,
+    message: "If that email has an unverified account, we've sent a new verification link. Already verified? Just sign in.",
+  };
+}
+
 export async function signIn(_: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = signInSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
@@ -41,7 +56,8 @@ export async function signIn(_: ActionState, formData: FormData): Promise<Action
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
-    if (/confirm/i.test(error.message)) return { error: "Please verify your email first. Check your inbox for the link." };
+    if (/confirm/i.test(error.message))
+      return { error: "Please verify your email first. Check your inbox for the link, or resend it below." };
     return { error: "Incorrect email or password." };
   }
   revalidatePath("/", "layout");

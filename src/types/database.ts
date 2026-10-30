@@ -49,6 +49,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"areas": {
+                  Row: {
+                    "country_code": string,"id": number,"is_active": boolean,"kind": string,"name": string,"region_id": number,"slug": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "country_code": string,"id"?: never,"is_active"?: boolean,"kind"?: string,"name": string,"region_id": number,"slug": string
+                  }
+                  Update: {
+                    "country_code"?: string,"id"?: never,"is_active"?: boolean,"kind"?: string,"name"?: string,"region_id"?: number,"slug"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "areas_country_code_fkey"
+      columns: ["country_code"]
+isOneToOne: false
+      referencedRelation: "countries"
+      referencedColumns: ["code"]
+    },{
+      foreignKeyName: "areas_region_id_country_code_fkey"
+      columns: ["region_id","country_code"]
+isOneToOne: false
+      referencedRelation: "regions"
+      referencedColumns: ["id","country_code"]
+    }
+                  ]
                 },"blocked_users": {
                   Row: {
                     "blocked_id": string,"blocker_id": string,"created_at": string,"reason": string | null
@@ -89,14 +115,14 @@ isOneToOne: false
                   ]
                 },"categories": {
                   Row: {
-                    "attribute_schema": NonNullable<Json>,"created_at": string,"icon": string | null,"id": number,"is_active": boolean,"name": string,"parent_id": number | null,"slug": string,"sort_order": number
+                    "attribute_schema": NonNullable<Json>,"created_at": string,"icon": string | null,"id": number,"is_active": boolean,"min_images": number,"name": string,"parent_id": number | null,"slug": string,"sort_order": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "attribute_schema"?: NonNullable<Json>,"created_at"?: string,"icon"?: string | null,"id"?: never,"is_active"?: boolean,"name": string,"parent_id"?: number | null,"slug": string,"sort_order"?: number
+                    "attribute_schema"?: NonNullable<Json>,"created_at"?: string,"icon"?: string | null,"id"?: never,"is_active"?: boolean,"min_images"?: number,"name": string,"parent_id"?: number | null,"slug": string,"sort_order"?: number
                   }
                   Update: {
-                    "attribute_schema"?: NonNullable<Json>,"created_at"?: string,"icon"?: string | null,"id"?: never,"is_active"?: boolean,"name"?: string,"parent_id"?: number | null,"slug"?: string,"sort_order"?: number
+                    "attribute_schema"?: NonNullable<Json>,"created_at"?: string,"icon"?: string | null,"id"?: never,"is_active"?: boolean,"min_images"?: number,"name"?: string,"parent_id"?: number | null,"slug"?: string,"sort_order"?: number
                   }
                   Relationships: [
                     {
@@ -197,14 +223,14 @@ isOneToOne: false
                   ]
                 },"countries": {
                   Row: {
-                    "allow_cross_border_discovery": boolean,"code": string,"created_at": string,"currency_code": string,"currency_minor_units": number,"default_language": string,"free_active_listing_limit": number,"is_active": boolean,"listing_duration_days": number,"locale": string,"name": string,"payment_provider": string | null,"phone_pattern": string,"phone_prefix": string,"postal_code_label": string | null,"region_label": string,"sort_order": number,"supported_languages": (string)[],"updated_at": string
+                    "allow_cross_border_discovery": boolean,"area_label": string | null,"code": string,"created_at": string,"currency_code": string,"currency_minor_units": number,"default_language": string,"free_active_listing_limit": number,"is_active": boolean,"listing_duration_days": number,"locale": string,"name": string,"payment_provider": string | null,"phone_pattern": string,"phone_prefix": string,"postal_code_label": string | null,"region_label": string,"sort_order": number,"supported_languages": (string)[],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "allow_cross_border_discovery"?: boolean,"code": string,"created_at"?: string,"currency_code": string,"currency_minor_units"?: number,"default_language"?: string,"free_active_listing_limit"?: number,"is_active"?: boolean,"listing_duration_days"?: number,"locale": string,"name": string,"payment_provider"?: string | null,"phone_pattern": string,"phone_prefix": string,"postal_code_label"?: string | null,"region_label"?: string,"sort_order"?: number,"supported_languages"?: (string)[],"updated_at"?: string
+                    "allow_cross_border_discovery"?: boolean,"area_label"?: string | null,"code": string,"created_at"?: string,"currency_code": string,"currency_minor_units"?: number,"default_language"?: string,"free_active_listing_limit"?: number,"is_active"?: boolean,"listing_duration_days"?: number,"locale": string,"name": string,"payment_provider"?: string | null,"phone_pattern": string,"phone_prefix": string,"postal_code_label"?: string | null,"region_label"?: string,"sort_order"?: number,"supported_languages"?: (string)[],"updated_at"?: string
                   }
                   Update: {
-                    "allow_cross_border_discovery"?: boolean,"code"?: string,"created_at"?: string,"currency_code"?: string,"currency_minor_units"?: number,"default_language"?: string,"free_active_listing_limit"?: number,"is_active"?: boolean,"listing_duration_days"?: number,"locale"?: string,"name"?: string,"payment_provider"?: string | null,"phone_pattern"?: string,"phone_prefix"?: string,"postal_code_label"?: string | null,"region_label"?: string,"sort_order"?: number,"supported_languages"?: (string)[],"updated_at"?: string
+                    "allow_cross_border_discovery"?: boolean,"area_label"?: string | null,"code"?: string,"created_at"?: string,"currency_code"?: string,"currency_minor_units"?: number,"default_language"?: string,"free_active_listing_limit"?: number,"is_active"?: boolean,"listing_duration_days"?: number,"locale"?: string,"name"?: string,"payment_provider"?: string | null,"phone_pattern"?: string,"phone_prefix"?: string,"postal_code_label"?: string | null,"region_label"?: string,"sort_order"?: number,"supported_languages"?: (string)[],"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -417,17 +443,23 @@ isOneToOne: false
                   ]
                 },"listings": {
                   Row: {
-                    "attributes": NonNullable<Json>,"category_id": number,"city": string | null,"client_request_id": string | null,"condition": Database["public"]['Enums']["item_condition"],"country_code": string,"created_at": string,"currency": string,"delivery_notes": string | null,"delivery_options": (Database["public"]['Enums']["delivery_option"])[],"description": string,"expires_at": string | null,"favourite_count": number,"id": string,"is_seed": boolean,"latitude": number | null,"longitude": number | null,"message_count": number,"moderation_note": string | null,"moderation_status": Database["public"]['Enums']["moderation_status"],"price_minor": number | null,"price_type": Database["public"]['Enums']["price_type"],"published_at": string | null,"quantity": number,"region_id": number | null,"search_vector": unknown,"seller_id": string,"sold_at": string | null,"sold_to": string | null,"status": Database["public"]['Enums']["listing_status"],"subcategory_id": number | null,"title": string,"updated_at": string,"view_count": number
+                    "area_id": number | null,"attributes": NonNullable<Json>,"category_id": number,"city": string | null,"client_request_id": string | null,"condition": Database["public"]['Enums']["item_condition"],"country_code": string,"created_at": string,"currency": string,"delivery_notes": string | null,"delivery_options": (Database["public"]['Enums']["delivery_option"])[],"description": string,"expires_at": string | null,"favourite_count": number,"id": string,"is_seed": boolean,"latitude": number | null,"longitude": number | null,"message_count": number,"moderation_note": string | null,"moderation_status": Database["public"]['Enums']["moderation_status"],"price_minor": number | null,"price_type": Database["public"]['Enums']["price_type"],"published_at": string | null,"quantity": number,"region_id": number | null,"search_vector": unknown,"seller_id": string,"sold_at": string | null,"sold_to": string | null,"status": Database["public"]['Enums']["listing_status"],"subcategory_id": number | null,"title": string,"updated_at": string,"view_count": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "attributes"?: NonNullable<Json>,"category_id": number,"city"?: string | null,"client_request_id"?: string | null,"condition": Database["public"]['Enums']["item_condition"],"country_code": string,"created_at"?: string,"currency": string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description": string,"expires_at"?: string | null,"favourite_count"?: number,"id"?: string,"is_seed"?: boolean,"latitude"?: number | null,"longitude"?: number | null,"message_count"?: number,"moderation_note"?: string | null,"moderation_status"?: Database["public"]['Enums']["moderation_status"],"price_minor"?: number | null,"price_type"?: Database["public"]['Enums']["price_type"],"published_at"?: string | null,"quantity"?: number,"region_id"?: number | null,"search_vector"?: never,"seller_id": string,"sold_at"?: string | null,"sold_to"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"subcategory_id"?: number | null,"title": string,"updated_at"?: string,"view_count"?: number
+                    "area_id"?: number | null,"attributes"?: NonNullable<Json>,"category_id": number,"city"?: string | null,"client_request_id"?: string | null,"condition": Database["public"]['Enums']["item_condition"],"country_code": string,"created_at"?: string,"currency": string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description": string,"expires_at"?: string | null,"favourite_count"?: number,"id"?: string,"is_seed"?: boolean,"latitude"?: number | null,"longitude"?: number | null,"message_count"?: number,"moderation_note"?: string | null,"moderation_status"?: Database["public"]['Enums']["moderation_status"],"price_minor"?: number | null,"price_type"?: Database["public"]['Enums']["price_type"],"published_at"?: string | null,"quantity"?: number,"region_id"?: number | null,"search_vector"?: never,"seller_id": string,"sold_at"?: string | null,"sold_to"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"subcategory_id"?: number | null,"title": string,"updated_at"?: string,"view_count"?: number
                   }
                   Update: {
-                    "attributes"?: NonNullable<Json>,"category_id"?: number,"city"?: string | null,"client_request_id"?: string | null,"condition"?: Database["public"]['Enums']["item_condition"],"country_code"?: string,"created_at"?: string,"currency"?: string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description"?: string,"expires_at"?: string | null,"favourite_count"?: number,"id"?: string,"is_seed"?: boolean,"latitude"?: number | null,"longitude"?: number | null,"message_count"?: number,"moderation_note"?: string | null,"moderation_status"?: Database["public"]['Enums']["moderation_status"],"price_minor"?: number | null,"price_type"?: Database["public"]['Enums']["price_type"],"published_at"?: string | null,"quantity"?: number,"region_id"?: number | null,"search_vector"?: never,"seller_id"?: string,"sold_at"?: string | null,"sold_to"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"subcategory_id"?: number | null,"title"?: string,"updated_at"?: string,"view_count"?: number
+                    "area_id"?: number | null,"attributes"?: NonNullable<Json>,"category_id"?: number,"city"?: string | null,"client_request_id"?: string | null,"condition"?: Database["public"]['Enums']["item_condition"],"country_code"?: string,"created_at"?: string,"currency"?: string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description"?: string,"expires_at"?: string | null,"favourite_count"?: number,"id"?: string,"is_seed"?: boolean,"latitude"?: number | null,"longitude"?: number | null,"message_count"?: number,"moderation_note"?: string | null,"moderation_status"?: Database["public"]['Enums']["moderation_status"],"price_minor"?: number | null,"price_type"?: Database["public"]['Enums']["price_type"],"published_at"?: string | null,"quantity"?: number,"region_id"?: number | null,"search_vector"?: never,"seller_id"?: string,"sold_at"?: string | null,"sold_to"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"subcategory_id"?: number | null,"title"?: string,"updated_at"?: string,"view_count"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "listings_area_id_fkey"
+      columns: ["area_id"]
+isOneToOne: false
+      referencedRelation: "areas"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "listings_category_id_fkey"
       columns: ["category_id"]
 isOneToOne: false
@@ -669,14 +701,14 @@ isOneToOne: false
                   ]
                 },"platform_payments": {
                   Row: {
-                    "amount_minor": number,"completed_at": string | null,"country_code": string,"created_at": string,"credits": number | null,"currency": string,"failure_reason": string | null,"id": string,"package_id": string | null,"plan_id": string | null,"provider": string,"provider_transaction_id": string | null,"purpose": Database["public"]['Enums']["payment_purpose"],"reference": string,"status": Database["public"]['Enums']["payment_status"],"updated_at": string,"user_id": string
+                    "amount_minor": number,"completed_at": string | null,"country_code": string,"created_at": string,"credits": number | null,"currency": string,"failure_reason": string | null,"id": string,"listing_id": string | null,"package_id": string | null,"plan_id": string | null,"promotion_days": number | null,"promotion_package_id": string | null,"provider": string,"provider_transaction_id": string | null,"purpose": Database["public"]['Enums']["payment_purpose"],"reference": string,"status": Database["public"]['Enums']["payment_status"],"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount_minor": number,"completed_at"?: string | null,"country_code": string,"created_at"?: string,"credits"?: number | null,"currency": string,"failure_reason"?: string | null,"id"?: string,"package_id"?: string | null,"plan_id"?: string | null,"provider": string,"provider_transaction_id"?: string | null,"purpose": Database["public"]['Enums']["payment_purpose"],"reference"?: string,"status"?: Database["public"]['Enums']["payment_status"],"updated_at"?: string,"user_id": string
+                    "amount_minor": number,"completed_at"?: string | null,"country_code": string,"created_at"?: string,"credits"?: number | null,"currency": string,"failure_reason"?: string | null,"id"?: string,"listing_id"?: string | null,"package_id"?: string | null,"plan_id"?: string | null,"promotion_days"?: number | null,"promotion_package_id"?: string | null,"provider": string,"provider_transaction_id"?: string | null,"purpose": Database["public"]['Enums']["payment_purpose"],"reference"?: string,"status"?: Database["public"]['Enums']["payment_status"],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "amount_minor"?: number,"completed_at"?: string | null,"country_code"?: string,"created_at"?: string,"credits"?: number | null,"currency"?: string,"failure_reason"?: string | null,"id"?: string,"package_id"?: string | null,"plan_id"?: string | null,"provider"?: string,"provider_transaction_id"?: string | null,"purpose"?: Database["public"]['Enums']["payment_purpose"],"reference"?: string,"status"?: Database["public"]['Enums']["payment_status"],"updated_at"?: string,"user_id"?: string
+                    "amount_minor"?: number,"completed_at"?: string | null,"country_code"?: string,"created_at"?: string,"credits"?: number | null,"currency"?: string,"failure_reason"?: string | null,"id"?: string,"listing_id"?: string | null,"package_id"?: string | null,"plan_id"?: string | null,"promotion_days"?: number | null,"promotion_package_id"?: string | null,"provider"?: string,"provider_transaction_id"?: string | null,"purpose"?: Database["public"]['Enums']["payment_purpose"],"reference"?: string,"status"?: Database["public"]['Enums']["payment_status"],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -685,6 +717,18 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "countries"
       referencedColumns: ["code"]
+    },{
+      foreignKeyName: "platform_payments_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listing_cards"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "platform_payments_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
     },{
       foreignKeyName: "platform_payments_package_id_fkey"
       columns: ["package_id"]
@@ -696,6 +740,12 @@ isOneToOne: false
       columns: ["plan_id"]
 isOneToOne: false
       referencedRelation: "subscription_plans"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "platform_payments_promotion_package_id_fkey"
+      columns: ["promotion_package_id"]
+isOneToOne: false
+      referencedRelation: "promotion_packages"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "platform_payments_user_id_fkey"
@@ -797,14 +847,14 @@ isOneToOne: false
                   ]
                 },"promotion_campaigns": {
                   Row: {
-                    "category_id": number | null,"clicks": number,"country_code": string,"created_at": string,"credits_charged": number,"credits_per_day": number,"credits_refunded": number,"days": number,"ends_at": string,"id": string,"impressions": number,"listing_id": string,"placement": Database["public"]['Enums']["promotion_placement"],"seller_id": string,"starts_at": string,"status": Database["public"]['Enums']["campaign_status"],"status_note": string | null,"updated_at": string
+                    "category_id": number | null,"clicks": number,"country_code": string,"created_at": string,"credits_charged": number,"credits_per_day": number,"credits_refunded": number,"days": number,"ends_at": string,"id": string,"impressions": number,"listing_id": string,"package_id": string | null,"payment_id": string | null,"placement": Database["public"]['Enums']["promotion_placement"],"seller_id": string,"starts_at": string,"status": Database["public"]['Enums']["campaign_status"],"status_note": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category_id"?: number | null,"clicks"?: number,"country_code": string,"created_at"?: string,"credits_charged": number,"credits_per_day": number,"credits_refunded"?: number,"days": number,"ends_at": string,"id"?: string,"impressions"?: number,"listing_id": string,"placement": Database["public"]['Enums']["promotion_placement"],"seller_id": string,"starts_at"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"status_note"?: string | null,"updated_at"?: string
+                    "category_id"?: number | null,"clicks"?: number,"country_code": string,"created_at"?: string,"credits_charged": number,"credits_per_day": number,"credits_refunded"?: number,"days": number,"ends_at": string,"id"?: string,"impressions"?: number,"listing_id": string,"package_id"?: string | null,"payment_id"?: string | null,"placement": Database["public"]['Enums']["promotion_placement"],"seller_id": string,"starts_at"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"status_note"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "category_id"?: number | null,"clicks"?: number,"country_code"?: string,"created_at"?: string,"credits_charged"?: number,"credits_per_day"?: number,"credits_refunded"?: number,"days"?: number,"ends_at"?: string,"id"?: string,"impressions"?: number,"listing_id"?: string,"placement"?: Database["public"]['Enums']["promotion_placement"],"seller_id"?: string,"starts_at"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"status_note"?: string | null,"updated_at"?: string
+                    "category_id"?: number | null,"clicks"?: number,"country_code"?: string,"created_at"?: string,"credits_charged"?: number,"credits_per_day"?: number,"credits_refunded"?: number,"days"?: number,"ends_at"?: string,"id"?: string,"impressions"?: number,"listing_id"?: string,"package_id"?: string | null,"payment_id"?: string | null,"placement"?: Database["public"]['Enums']["promotion_placement"],"seller_id"?: string,"starts_at"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"status_note"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -830,6 +880,18 @@ isOneToOne: false
       columns: ["listing_id"]
 isOneToOne: false
       referencedRelation: "listings"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "promotion_campaigns_package_id_fkey"
+      columns: ["package_id"]
+isOneToOne: false
+      referencedRelation: "promotion_packages"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "promotion_campaigns_payment_id_fkey"
+      columns: ["payment_id"]
+isOneToOne: false
+      referencedRelation: "platform_payments"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "promotion_campaigns_seller_id_fkey"
@@ -869,6 +931,26 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "promotion_campaigns"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"promotion_packages": {
+                  Row: {
+                    "code": string,"country_code": string,"created_at": string,"currency": string,"days": number,"description": string | null,"id": string,"is_active": boolean,"name": string,"placements": (Database["public"]['Enums']["promotion_placement"])[],"price_minor": number,"sort_order": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"country_code": string,"created_at"?: string,"currency": string,"days": number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"placements"?: (Database["public"]['Enums']["promotion_placement"])[],"price_minor": number,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "code"?: string,"country_code"?: string,"created_at"?: string,"currency"?: string,"days"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"placements"?: (Database["public"]['Enums']["promotion_placement"])[],"price_minor"?: number,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "promotion_packages_country_code_fkey"
+      columns: ["country_code"]
+isOneToOne: false
+      referencedRelation: "countries"
+      referencedColumns: ["code"]
     }
                   ]
                 },"promotion_prices": {
@@ -1238,11 +1320,17 @@ isOneToOne: false
           Views: {
             "listing_cards": {
                   Row: {
-                    "category_id": number,"category_slug": string,"city": string | null,"condition": Database["public"]['Enums']["item_condition"],"country_code": string,"created_at": string,"currency": string,"favourite_count": number,"id": string,"image_url": string | null,"is_seed": boolean,"latitude": number | null,"longitude": number | null,"moderation_status": Database["public"]['Enums']["moderation_status"],"price_minor": number | null,"price_type": Database["public"]['Enums']["price_type"],"published_at": string | null,"quantity": number,"region_id": number | null,"region_name": string | null,"seller_id": string,"seller_verification": Database["public"]['Enums']["verification_status"] | null,"shop_name": string | null,"shop_slug": string | null,"status": Database["public"]['Enums']["listing_status"],"title": string,"view_count": number
+                    "area_id": number | null,"area_name": string | null,"category_id": number,"category_slug": string,"city": string | null,"condition": Database["public"]['Enums']["item_condition"],"country_code": string,"created_at": string,"currency": string,"favourite_count": number,"id": string,"image_count": number | null,"image_url": string | null,"is_seed": boolean,"latitude": number | null,"longitude": number | null,"moderation_status": Database["public"]['Enums']["moderation_status"],"price_minor": number | null,"price_type": Database["public"]['Enums']["price_type"],"published_at": string | null,"quantity": number,"region_id": number | null,"region_name": string | null,"seller_id": string,"seller_verification": Database["public"]['Enums']["verification_status"] | null,"shop_name": string | null,"shop_slug": string | null,"status": Database["public"]['Enums']["listing_status"],"title": string,"view_count": number
                   }
                   ComputedFields: never
                   Relationships: [
                     {
+      foreignKeyName: "listings_area_id_fkey"
+      columns: ["area_id"]
+isOneToOne: false
+      referencedRelation: "areas"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "listings_category_id_fkey"
       columns: ["category_id"]
 isOneToOne: false
@@ -1323,7 +1411,10 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "_apply_credits":
+            "_activate_paid_promotion":
+{ Args: { "p_payment": string }; Returns: number
+                           },
+"_apply_credits":
 { Args: { "p_actor"?: string,"p_delta": number,"p_description": string,"p_idem": string,"p_kind": Database["public"]['Enums']["credit_tx_kind"],"p_ref_id": string,"p_ref_type": string,"p_user": string }; Returns: number
                            },
 "_assert_can_interact":
@@ -1347,6 +1438,9 @@ isOneToOne: false
 "_require_staff":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"active_listing_count":
+{ Args: { "p_user": string }; Returns: number
+                           },
 "active_listing_limit":
 { Args: { "p_country": string,"p_user": string }; Returns: number
                            },
@@ -1369,6 +1463,9 @@ isOneToOne: false
                            },
 "admin_set_campaign_status":
 { Args: { "p_id": string,"p_note": string,"p_status": Database["public"]['Enums']["campaign_status"] }; Returns: undefined
+                           },
+"admin_set_category_min_images":
+{ Args: { "p_id": number,"p_min": number }; Returns: undefined
                            },
 "admin_set_policy":
 { Args: { "p_body": string,"p_country": string,"p_kind": string,"p_title": string }; Returns: undefined
@@ -1405,6 +1502,9 @@ isOneToOne: false
                            },
 "admin_upsert_plan":
 { Args: { "p_active": boolean,"p_code": string,"p_country": string,"p_description": string,"p_id": string,"p_listing_limit": number,"p_monthly_credits": number,"p_name": string,"p_period_days": number,"p_price_minor": number,"p_sort": number }; Returns: string
+                           },
+"admin_upsert_promotion_package":
+{ Args: { "p_active": boolean,"p_code": string,"p_country": string,"p_days": number,"p_description": string,"p_id": string,"p_name": string,"p_placements": (Database["public"]['Enums']["promotion_placement"])[],"p_price_minor": number,"p_sort": number }; Returns: string
                            },
 "anonymise_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -1550,8 +1650,10 @@ isOneToOne: false
 { Args: { "p_listing": string,"p_user"?: string }; Returns: string
                            },
 "search_listings":
-{ Args: { "p_category"?: string,"p_city"?: string,"p_conditions"?: (Database["public"]['Enums']["item_condition"])[],"p_country"?: string,"p_include_unavailable"?: boolean,"p_limit"?: number,"p_max_km"?: number,"p_max_price"?: number,"p_min_price"?: number,"p_near_lat"?: number,"p_near_lng"?: number,"p_negotiable_only"?: boolean,"p_offset"?: number,"p_query"?: string,"p_region_id"?: number,"p_seller_id"?: string,"p_sort"?: string }; Returns: {
-              "category_id": number,
+{ Args: { "p_area_id"?: number,"p_category"?: string,"p_city"?: string,"p_conditions"?: (Database["public"]['Enums']["item_condition"])[],"p_country"?: string,"p_include_unavailable"?: boolean,"p_limit"?: number,"p_max_km"?: number,"p_max_price"?: number,"p_min_price"?: number,"p_near_lat"?: number,"p_near_lng"?: number,"p_negotiable_only"?: boolean,"p_offset"?: number,"p_query"?: string,"p_region_id"?: number,"p_seller_id"?: string,"p_sort"?: string }; Returns: {
+              "area_id": number | null,
+"area_name": string | null,
+"category_id": number,
 "category_slug": string,
 "city": string | null,
 "condition": Database["public"]['Enums']["item_condition"],
@@ -1560,6 +1662,7 @@ isOneToOne: false
 "currency": string,
 "favourite_count": number,
 "id": string,
+"image_count": number | null,
 "image_url": string | null,
 "is_seed": boolean,
 "latitude": number | null,
@@ -1596,6 +1699,11 @@ isOneToOne: false
 "start_conversation":
 { Args: { "p_body": string,"p_listing": string }; Returns: string
                            },
+"start_promotion_checkout":
+{ Args: { "p_listing": string,"p_package": string }; Returns: {
+              "amount_minor": number,"currency": string,"description": string,"payment_id": string,"provider": string,"reference": string
+            }[]
+                           },
 "submit_review":
 { Args: { "p_body": string,"p_listing": string,"p_rating": number }; Returns: string
                            },
@@ -1607,7 +1715,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_status": "active"|"suspended"|"deactivated"|"deleted","app_role": "admin"|"moderator","campaign_status": "active"|"paused"|"ended"|"cancelled"|"removed","credit_tx_kind": "purchase"|"subscription_grant"|"promotion_spend"|"promotion_refund"|"admin_grant"|"admin_debit","delivery_option": "local_pickup"|"buyer_collection"|"seller_dispatch"|"courier"|"other","item_condition": "new"|"like_new"|"used_good"|"used_fair"|"for_parts","listing_status": "draft"|"active"|"paused"|"reserved"|"sold"|"archived"|"expired","moderation_status": "approved"|"pending_review"|"rejected"|"removed","offer_status": "pending"|"accepted"|"rejected"|"countered"|"withdrawn"|"expired","payment_purpose": "credits"|"subscription","payment_status": "pending"|"succeeded"|"failed"|"cancelled"|"refunded","price_type": "fixed"|"negotiable"|"contact","promotion_placement": "search"|"homepage"|"category","report_reason": "prohibited_item"|"scam_or_fraud"|"counterfeit"|"misleading"|"offensive"|"harassment"|"spam"|"wrong_category"|"other","report_status": "open"|"reviewing"|"resolved"|"dismissed","seller_type": "individual"|"trader"|"shop"|"wholesaler"|"business","subscription_status": "active"|"expired"|"replaced","verification_status": "unverified"|"pending"|"verified"|"rejected"
+            "account_status": "active"|"suspended"|"deactivated"|"deleted","app_role": "admin"|"moderator","campaign_status": "active"|"paused"|"ended"|"cancelled"|"removed","credit_tx_kind": "purchase"|"subscription_grant"|"promotion_spend"|"promotion_refund"|"admin_grant"|"admin_debit","delivery_option": "local_pickup"|"buyer_collection"|"seller_dispatch"|"courier"|"other","item_condition": "new"|"like_new"|"used_good"|"used_fair"|"for_parts","listing_status": "draft"|"active"|"paused"|"reserved"|"sold"|"archived"|"expired","moderation_status": "approved"|"pending_review"|"rejected"|"removed","offer_status": "pending"|"accepted"|"rejected"|"countered"|"withdrawn"|"expired","payment_purpose": "credits"|"subscription"|"promotion","payment_status": "pending"|"succeeded"|"failed"|"cancelled"|"refunded","price_type": "fixed"|"negotiable"|"contact","promotion_placement": "search"|"homepage"|"category","report_reason": "prohibited_item"|"scam_or_fraud"|"counterfeit"|"misleading"|"offensive"|"harassment"|"spam"|"wrong_category"|"other","report_status": "open"|"reviewing"|"resolved"|"dismissed","seller_type": "individual"|"trader"|"shop"|"wholesaler"|"business","subscription_status": "active"|"expired"|"replaced","verification_status": "unverified"|"pending"|"verified"|"rejected"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1727,7 +1835,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_status": ["active", "suspended", "deactivated", "deleted"],"app_role": ["admin", "moderator"],"campaign_status": ["active", "paused", "ended", "cancelled", "removed"],"credit_tx_kind": ["purchase", "subscription_grant", "promotion_spend", "promotion_refund", "admin_grant", "admin_debit"],"delivery_option": ["local_pickup", "buyer_collection", "seller_dispatch", "courier", "other"],"item_condition": ["new", "like_new", "used_good", "used_fair", "for_parts"],"listing_status": ["draft", "active", "paused", "reserved", "sold", "archived", "expired"],"moderation_status": ["approved", "pending_review", "rejected", "removed"],"offer_status": ["pending", "accepted", "rejected", "countered", "withdrawn", "expired"],"payment_purpose": ["credits", "subscription"],"payment_status": ["pending", "succeeded", "failed", "cancelled", "refunded"],"price_type": ["fixed", "negotiable", "contact"],"promotion_placement": ["search", "homepage", "category"],"report_reason": ["prohibited_item", "scam_or_fraud", "counterfeit", "misleading", "offensive", "harassment", "spam", "wrong_category", "other"],"report_status": ["open", "reviewing", "resolved", "dismissed"],"seller_type": ["individual", "trader", "shop", "wholesaler", "business"],"subscription_status": ["active", "expired", "replaced"],"verification_status": ["unverified", "pending", "verified", "rejected"]
+            "account_status": ["active", "suspended", "deactivated", "deleted"],"app_role": ["admin", "moderator"],"campaign_status": ["active", "paused", "ended", "cancelled", "removed"],"credit_tx_kind": ["purchase", "subscription_grant", "promotion_spend", "promotion_refund", "admin_grant", "admin_debit"],"delivery_option": ["local_pickup", "buyer_collection", "seller_dispatch", "courier", "other"],"item_condition": ["new", "like_new", "used_good", "used_fair", "for_parts"],"listing_status": ["draft", "active", "paused", "reserved", "sold", "archived", "expired"],"moderation_status": ["approved", "pending_review", "rejected", "removed"],"offer_status": ["pending", "accepted", "rejected", "countered", "withdrawn", "expired"],"payment_purpose": ["credits", "subscription", "promotion"],"payment_status": ["pending", "succeeded", "failed", "cancelled", "refunded"],"price_type": ["fixed", "negotiable", "contact"],"promotion_placement": ["search", "homepage", "category"],"report_reason": ["prohibited_item", "scam_or_fraud", "counterfeit", "misleading", "offensive", "harassment", "spam", "wrong_category", "other"],"report_status": ["open", "reviewing", "resolved", "dismissed"],"seller_type": ["individual", "trader", "shop", "wholesaler", "business"],"subscription_status": ["active", "expired", "replaced"],"verification_status": ["unverified", "pending", "verified", "rejected"]
           }
         }
 } as const

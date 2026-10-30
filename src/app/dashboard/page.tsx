@@ -6,20 +6,29 @@ export const metadata = { title: "Seller dashboard" };
 export default async function Overview({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const { welcome } = await searchParams;
   const { supabase, user, seller } = await requireSeller();
-  const [{ data: listings }, { count: followers }, { count: pendingOffers }, { data: limit }, { data: rating }] = await Promise.all([
+  const [{ data: listings }, { count: followers }, { count: pendingOffers }, { data: limit }, { data: rating }, { data: activeCount }, { data: promos }, { data: sub }] = await Promise.all([
     supabase.from("listings").select("id, title, status, view_count, favourite_count, message_count").eq("seller_id", user.id),
     supabase.from("seller_follows").select("follower_id", { count: "exact", head: true }).eq("seller_id", user.id),
     supabase.from("offers").select("id", { count: "exact", head: true }).eq("seller_id", user.id).eq("status", "pending").neq("proposed_by", user.id),
     supabase.rpc("active_listing_limit", { p_user: user.id, p_country: seller.country_code }),
     supabase.from("seller_ratings").select("*").eq("seller_id", user.id).maybeSingle(),
+    supabase.rpc("active_listing_count", { p_user: user.id }),
+    supabase.from("promotion_campaigns").select("id, listing_id, placement, ends_at, status, payment_id, listing:listings(title)")
+      .eq("seller_id", user.id).in("status", ["active", "paused"]).gt("ends_at", new Date().toISOString()).order("ends_at"),
+    supabase.from("subscriptions").select("current_period_end, plan:subscription_plans(name)").eq("user_id", user.id).eq("status", "active").maybeSingle(),
   ]);
   const all = listings ?? [];
-  const active = all.filter((l) => l.status === "active").length;
+  const active = activeCount ?? all.filter((l) => l.status === "active").length;
+  const remaining = limit != null ? Math.max(0, limit - active) : null;
+  // One row per promoted listing (a package covers several placements), soonest expiry first.
+  const promoted = [...new Map((promos ?? []).map((p) => [p.listing_id, p])).values()];
   const sum = (k: "view_count" | "favourite_count" | "message_count") => all.reduce((a, l) => a + l[k], 0);
   const top = [...all].sort((a, b) => b.view_count - a.view_count).slice(0, 5);
 
   const stats = [
-    { label: "Active listings", value: `${active}${limit != null ? ` / ${limit}` : ""}`, hint: "Free allowance" },
+    { label: "Active listings", value: `${active}${limit != null ? ` / ${limit}` : ""}`, hint: sub ? `${sub.plan?.name} plan allowance` : "Free allowance", href: "/dashboard/listings?status=active" },
+    { label: "Listings you can still publish", value: remaining ?? "—", hint: remaining === 0 ? "Limit reached" : undefined, href: "/dashboard/plan" },
+    { label: "Promoted listings", value: promoted.length, href: "/dashboard/promotions" },
     { label: "Listing views", value: sum("view_count"), hint: "Unique viewers per day" },
     { label: "Saves", value: sum("favourite_count") },
     { label: "Enquiries", value: sum("message_count"), hint: "Conversations started" },
@@ -46,6 +55,38 @@ export default async function Overview({ searchParams }: { searchParams: Promise
           </li>
         ))}
       </ul>
+      {limit != null && (
+        <section className={`card space-y-2 p-5 ${remaining === 0 ? "border-warning" : ""}`} data-testid="allowance">
+          <h2 className="h2">Listing allowance</h2>
+          <p className="text-sm">
+            You have <strong>{active}</strong> active listing{active === 1 ? "" : "s"} out of <strong>{limit}</strong> on the {sub ? `${sub.plan?.name} plan` : "free plan"}
+            {remaining != null && <> · <strong>{remaining}</strong> left</>}.
+            {" "}Each product is one listing, however many photos it has. Sold, paused, archived, draft and expired listings don&apos;t count.
+          </p>
+          {active > limit && (
+            <p className="text-sm text-muted">You have more active listings than your current allowance. They all stay live; you can publish new ones once you are below {limit}, or upgrade.</p>
+          )}
+          <a href="/dashboard/plan" className={remaining === 0 ? "btn-primary" : "btn-secondary"}>{remaining === 0 ? "Upgrade to publish more" : "See plans"}</a>
+        </section>
+      )}
+      <section className="card space-y-2 p-5" data-testid="promotion-status">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="h2">Promotions</h2>
+          <Link href="/dashboard/promotions" className="link text-sm">Manage promotions</Link>
+        </div>
+        {promoted.length === 0 ? (
+          <p className="text-sm text-muted">No listings are promoted right now. Promote one when you publish it, or from the Promotions page.</p>
+        ) : (
+          <ul className="divide-y divide-line text-sm">
+            {promoted.map((p) => (
+              <li key={p.id} className="flex flex-wrap justify-between gap-2 py-2">
+                <Link href={`/listing/${p.listing_id}`} className="font-medium hover:text-brand">{p.listing?.title}</Link>
+                <span className="text-muted">{p.status === "paused" ? "Paused · " : ""}{p.payment_id ? "Paid" : "Credits"} · ends {new Date(p.ends_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <p className="text-xs text-muted">All figures are counted from real activity on Naira Marketplace. Views are de-duplicated per visitor per day and exclude your own visits.</p>
       <section className="card p-5">
         <h2 className="h2 mb-3">Listing performance</h2>
