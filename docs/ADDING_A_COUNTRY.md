@@ -7,11 +7,14 @@ Markets are data, not code. Kenya (KES) and South Africa (ZAR) are already confi
 1. Have the market's legal texts reviewed: terms addendum, privacy addendum and prohibited items. Add them in Admin > Policies &
    settings for that country.
 2. Add country-specific prohibited or restricted terms in Admin > Policies.
-3. Review the regions list (Kenya: counties; South Africa: provinces).
+3. Review the regions list (Kenya: counties; South Africa: provinces). Second-level areas (like Nigeria's LGAs) are optional: see
+   "Second-level areas" below.
 4. Credit packages and plans:
    - Kenya has placeholder packages and no plans yet.
    - South Africa has placeholder packages and no plans yet.
    - Set real prices in Admin > Credits & packages and Admin > Subscription plans.
+   - Paid listing promotions: add packages in that market's currency in Admin > Promotion packages. Markets without packages only offer
+     the free standard listing (naira packages are never applied to other markets).
 5. In Admin > Countries, set:
    - the free active-listing limit
    - the listing duration
@@ -40,5 +43,13 @@ Things to check:
   currency.
 - `phone_pattern` matches the national significant number without the leading 0. `normalisePhone()` stores numbers in E.164 format.
 - The country flag is derived from the ISO code automatically.
+
+## Second-level areas (LGAs, districts)
+
+Nigeria has all 774 LGAs in `public.areas` (source: `supabase/data/ng-locations.json`, generated into the locations migration by
+`scripts/generate-locations-sql.mjs`). To add districts for another market, insert rows into `public.areas` (each `region_id` must be a
+region of the same country) and set `countries.area_label` (for example `'District'`). The listing form, homepage and search then show
+the dependent select for that market automatically, and the database rejects an area that is not in the chosen region. Leave
+`area_label` null to keep the market on regions only (as Ghana, Kenya and South Africa are today).
 
 Then run `npx supabase db push`, regenerate types (`npm run db:types`), and follow the "open" steps above.

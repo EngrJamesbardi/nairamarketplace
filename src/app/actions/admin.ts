@@ -62,6 +62,19 @@ const ops = {
     active: z.enum(["on"]).optional(),
     sort: z.coerce.number().int().min(0).max(1000).default(0),
   }),
+  "promo_package.upsert": z.object({
+    id: uuid.optional().or(z.literal("").transform(() => undefined)),
+    country: z.string().regex(/^[A-Z]{2}$/),
+    code: z.string().trim().regex(/^[a-z0-9-]{2,40}$/, "Code: 2-40 lowercase letters, numbers or hyphens"),
+    name: z.string().trim().min(2).max(60),
+    description: text(300),
+    days: z.coerce.number().int().min(1, "Duration must be 1-90 days").max(90, "Duration must be 1-90 days"),
+    price: z.string().trim().regex(/^\d+(\.\d{1,2})?$/, "Enter a price like 2000 or 2000.00"),
+    placements: z.array(z.enum(["search", "homepage", "category"])).min(1, "Choose at least one placement"),
+    active: z.enum(["on"]).optional(),
+    sort: z.coerce.number().int().min(0).max(1000).default(0),
+  }),
+  "category.min_images": z.object({ id: z.coerce.number().int().positive(), min_images: z.coerce.number().int().min(1).max(10) }),
   "promo_price.set": z.object({ country: z.string().regex(/^[A-Z]{2}$/), placement: z.enum(["search", "homepage", "category"]), credits_per_day: z.coerce.number().int().min(1).max(10000) }),
   "credits.adjust": z.object({ id: uuid, delta: z.coerce.number().int().min(-100000).max(100000).refine((n) => n !== 0, "Enter a non-zero amount"), reason: z.string().trim().min(3).max(300), request_id: uuid }),
   "campaign.status": z.object({ id: uuid, status: z.enum(["paused", "active", "removed"]), note: text(300) }),
@@ -79,7 +92,7 @@ export async function runAdminOp(formData: FormData): Promise<string> {
   const schema = ops[op];
   const sep = safeBack.includes("?") ? "&" : "?";
   if (!schema) return `${safeBack}${sep}error=${encodeURIComponent("Unknown operation")}`;
-  const parsed = schema.safeParse(Object.fromEntries(formData));
+  const parsed = schema.safeParse({ ...Object.fromEntries(formData), placements: formData.getAll("placements") });
   if (!parsed.success) return `${safeBack}${sep}error=${encodeURIComponent(parsed.error.issues[0].message)}`;
   const v = parsed.data as unknown as Record<string, never>;
 
@@ -153,6 +166,21 @@ export async function runAdminOp(formData: FormData): Promise<string> {
       });
       break;
     }
+    case "promo_package.upsert": {
+      const { data: c } = await supabase.from("countries").select("currency_code").eq("code", v.country).single();
+      if (!c) {
+        res = { error: { message: "Unknown market" } };
+        break;
+      }
+      res = await supabase.rpc("admin_upsert_promotion_package", {
+        p_id: (v.id ?? undefined) as unknown as string, p_country: v.country, p_code: v.code, p_name: v.name, p_description: v.description ?? "",
+        p_days: v.days, p_price_minor: Number(parseToMinor(v.price, c.currency_code)), p_placements: v.placements, p_active: v.active === "on", p_sort: v.sort,
+      });
+      break;
+    }
+    case "category.min_images":
+      res = await supabase.rpc("admin_set_category_min_images", { p_id: v.id, p_min: v.min_images });
+      break;
     case "promo_price.set":
       res = await supabase.rpc("admin_set_promotion_price", { p_country: v.country, p_placement: v.placement, p_credits_per_day: v.credits_per_day });
       break;

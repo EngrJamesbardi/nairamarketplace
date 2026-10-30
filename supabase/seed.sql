@@ -80,3 +80,9 @@ ins as (
 )
 insert into public.listing_images (listing_id, storage_path, url, position, alt_text)
 select ins.id, 'seed' || d.img, d.img, 0, ins.title from ins join data d on d.title = ins.title;
+
+-- Demo LGAs, so state + LGA search has something to find: Chioma's shop is in Ikeja (Lagos), Tunde's in Wuse (Abuja Municipal, FCT).
+update public.listings l set area_id = a.id
+from public.areas a join public.regions r on r.id = a.region_id
+where l.is_seed and l.region_id = r.id
+  and ((r.name = 'Lagos' and a.name = 'Ikeja') or (r.name = 'Federal Capital Territory' and a.name = 'Abuja Municipal'));

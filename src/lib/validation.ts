@@ -90,10 +90,12 @@ export const listingSchema = z
     condition: z.enum(CONDITIONS),
     quantity: z.coerce.number().int().min(0).max(100000),
     regionId: z.coerce.number().int().positive().optional().or(z.literal("").transform(() => undefined)),
+    areaId: z.coerce.number().int().positive().optional().or(z.literal("").transform(() => undefined)),
     city: optionalText(80),
     deliveryOptions: z.array(z.enum(DELIVERY_OPTIONS)).min(1, "Choose at least one delivery or collection option"),
     deliveryNotes: optionalText(500),
     status: z.enum(["draft", "active"]).default("active"),
+    promotionPackage: z.uuid().optional().or(z.literal("").transform(() => undefined)),
     attributes: z.record(z.string(), z.union([z.string().max(100), z.number()])).default({}),
   })
   .transform((v, ctx) => {
@@ -109,12 +111,26 @@ export const listingSchema = z
         return z.NEVER;
       }
     }
+    if (v.areaId && !v.regionId) {
+      ctx.addIssue({ code: "custom", path: ["regionId"], message: "Choose the state first" });
+      return z.NEVER;
+    }
     return { ...v, priceMinor };
   });
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-export const MAX_IMAGES = 8;
+export const MAX_IMAGES = 10;
+
+/**
+ * Photos needed before a listing can be published. Categories carry their own minimum (categories.min_images: 4 by
+ * default, 2 for food, books and beauty, where four distinct photos are often impractical). Editing a listing that is
+ * already live never forces extra photos onto it: it only must not drop below what it has, up to the minimum.
+ */
+export function requiredPhotos(categoryMin: number, opts: { publishing: boolean; savedCount: number }): number {
+  const min = Math.min(Math.max(categoryMin, 1), MAX_IMAGES);
+  return opts.publishing ? min : Math.max(1, Math.min(min, opts.savedCount));
+}
 
 /** Check magic bytes, not just the declared MIME type. */
 export function sniffImageType(bytes: Uint8Array): (typeof ALLOWED_IMAGE_TYPES)[number] | null {
@@ -138,4 +154,4 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   return out;
 }
 
-export type ActionState = { ok?: boolean; error?: string; fieldErrors?: Record<string, string>; message?: string; redirectTo?: string } | null;
+export type ActionState = { ok?: boolean; error?: string; code?: string; fieldErrors?: Record<string, string>; message?: string; redirectTo?: string } | null;

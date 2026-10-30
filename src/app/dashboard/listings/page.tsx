@@ -13,7 +13,12 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
   const { supabase, user } = await requireSeller();
   let q = supabase.from("listings").select("id, title, status, moderation_status, moderation_note, price_minor, currency, price_type, country_code, view_count, favourite_count, message_count, expires_at, images:listing_images(url, position)").eq("seller_id", user.id).order("updated_at", { ascending: false }).limit(200);
   if (sp.status && (LISTING_STATUSES as readonly string[]).includes(sp.status)) q = q.eq("status", sp.status as (typeof LISTING_STATUSES)[number]);
-  const { data: listings } = await q;
+  const [{ data: listings }, { data: promos }] = await Promise.all([
+    q,
+    supabase.from("promotion_campaigns").select("listing_id, ends_at").eq("seller_id", user.id).eq("status", "active").gt("ends_at", new Date().toISOString()),
+  ]);
+  const promotedUntil = new Map<string, string>();
+  for (const p of promos ?? []) if (!promotedUntil.has(p.listing_id) || p.ends_at > promotedUntil.get(p.listing_id)!) promotedUntil.set(p.listing_id, p.ends_at);
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -43,6 +48,7 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
                     <Link href={`/dashboard/listings/${l.id}/edit`} className="font-semibold hover:text-brand">{l.title}</Link>
                     <span className="badge bg-cream text-brand-strong">{t(`status.${l.status}`)}</span>
                     {l.moderation_status !== "approved" && <span className="badge bg-warning/15 text-warning">{l.moderation_status.replace("_", " ")}</span>}
+                    {promotedUntil.has(l.id) && <span className="badge bg-sponsored-bg text-sponsored-fg">Promoted until {new Date(promotedUntil.get(l.id)!).toLocaleDateString("en-GB")}</span>}
                   </div>
                   <PriceTag priceMinor={l.price_minor} currency={l.currency} priceType={l.price_type} country={l.country_code} className="text-sm" />
                   <p className="flex gap-3 text-xs text-muted">

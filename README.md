@@ -19,9 +19,10 @@ or take commissions. Revenue comes only from optional seller tools: promotion cr
 | Discovery | Full-text + typo-tolerant search, filters (category, region, price, condition, delivery, distance), sort, recently listed, popular, near you, featured sellers |
 | Negotiation | Real-time messaging (with polling fallback), link warnings, offers and counter-offers with an enforced state machine (pending, accepted, rejected, countered, withdrawn, expired) |
 | Trust | Favourites, follows, blocking, reports, reviews only after an accepted offer or confirmed sale, seller business verification, moderation queue, append-only audit log |
-| Money | Immutable, idempotent credits ledger; promotions with clearly labelled sponsored slots and real de-duplicated impressions/clicks; seller plans; payment-provider abstraction with a development mock and a Paystack adapter (not yet configured) |
+| Money | Immutable, idempotent credits ledger; promotions with clearly labelled sponsored slots and real de-duplicated impressions/clicks; optional paid promotion when publishing (₦2,000 / 7 days, ₦5,000 / 30 days in Nigeria, activated only by a verified payment); free allowance of 15 active listings, higher with seller plans; payment-provider abstraction with a development mock and a Paystack adapter (not yet configured) |
+| Locations | All 36 Nigerian states + FCT and 774 LGAs with dependent selects in listing forms, homepage and search; Ghana's 16 regions; second-level areas are per market and optional |
 | PWA | Manifest + icons, service worker with offline fallback, saved copies of public pages, private pages never cached, user-approved updates |
-| Admin | Overview stats, listing moderation, reports, users, verifications, countries, categories, policies, credit packages, promotion prices, campaigns, plans, payments/revenue, audit log |
+| Admin | Overview stats, listing moderation, reports, users, verifications, countries (free listing allowance), categories (photos needed to publish), policies, credit packages, promotion prices, paid promotion packages, active/expired promotions, plans, payments/revenue, audit log |
 
 Screenshots of the local flows: [docs/DEMO.md](docs/DEMO.md).
 

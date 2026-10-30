@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerAndVerify, uid, PNG_1x1, signIn, serviceClient, hydrated } from "./helpers";
+import { registerAndVerify, uid, signIn, serviceClient, hydrated, addPhotos } from "./helpers";
 
 test("guest can browse, search, filter and switch country", async ({ page }) => {
   await page.goto("/");
@@ -53,13 +53,14 @@ test("new user registers, verifies email, opens a storefront and publishes a lis
   await page.goto("/sell");
   await expect(page.getByRole("heading", { name: "New listing" })).toBeVisible();
   await hydrated(page);
-  await page.getByTestId("images-input").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: PNG_1x1 });
-  await expect(page.getByAltText("Photo 1")).toBeVisible();
+  await addPhotos(page, 4);
   const title = `Vintage radio ${id}`;
   await page.getByLabel("Title").fill(title);
   await page.getByLabel("Category", { exact: true }).selectOption({ label: "Phones & electronics" });
   await page.getByLabel("Description").fill("Working vintage radio with original case. Pickup in Yaba.");
   await page.getByLabel(/^Price \(NGN\)/).fill("45,000");
+  await expect(page.getByLabel("State")).toHaveValue(/\d+/); // storefront's state is the default
+  await page.getByLabel("LGA").selectOption({ label: "Lagos Mainland" });
   await page.getByRole("button", { name: "Publish listing" }).click();
   await expect(page).toHaveURL(/\/dashboard\/listings\?saved=/);
   await expect(page.getByRole("link", { name: title })).toBeVisible();
@@ -87,13 +88,13 @@ test("publishing again after a lost response does not create a duplicate listing
   await signIn(page, "chioma@naira.test");
   await page.goto("/sell");
   await hydrated(page);
-  await page.getByTestId("images-input").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: PNG_1x1 });
-  await expect(page.getByAltText("Photo 1")).toBeVisible();
+  await addPhotos(page, 4);
   const title = `Ceiling fan ${uid()}`;
   await page.getByLabel("Title").fill(title);
   await page.getByLabel("Category", { exact: true }).selectOption({ label: "Appliances" });
   await page.getByLabel("Description").fill("Standing fan, three speeds, works well. Pickup only.");
   await page.getByLabel(/^Price \(NGN\)/).fill("18,000");
+  await page.getByLabel("LGA").selectOption({ label: "Ikeja" });
 
   // The server saves the first submission but its response never reaches the phone (flaky network / lost redirect).
   let dropped = false;

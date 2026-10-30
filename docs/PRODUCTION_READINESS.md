@@ -29,7 +29,12 @@ The app is **not production-ready yet**. Status key: ✅ done and tested locally
 
 - 🟡 Paystack adapter: create accounts, set keys and webhook, then test in **test mode** (success, decline, duplicate, tampered amount),
   then go live
-- ⬜ Real prices approved for packages, plans and promotion placements (current values are placeholders)
+- ⬜ Real prices approved for packages, plans and promotion placements (current values are placeholders). Paid promotion packages
+  start at ₦2,000 / 7 days and ₦5,000 / 30 days for Nigeria only (Admin > Promotion packages)
+- ⬜ A real payment provider (Paystack) configured and tested before paid promotions or plans are switched on; the mock is refused in
+  production builds unless ALLOW_MOCK_PAYMENTS=true, which must never be set on a public deployment
+- ⬜ The maintenance cron (/api/cron/maintenance) scheduled so expired promotions and listings are marked as ended (they already stop
+  being shown or counted at their end date even if the job has not run)
 - ⬜ Refund and dispute procedure for platform payments; receipts or invoices as required by tax rules
 - ⬜ Accounting export or reconciliation process (Admin > Payments shows totals per currency)
 

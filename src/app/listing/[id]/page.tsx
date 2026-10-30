@@ -18,7 +18,7 @@ async function load(id: string) {
   const supabase = await createClient();
   const { data: listing } = await supabase
     .from("listings")
-    .select("*, category:categories!listings_category_id_fkey(name, slug, attribute_schema), subcategory:categories!listings_subcategory_id_fkey(name, slug), region:regions(name), images:listing_images(url, alt_text, position)")
+    .select("*, category:categories!listings_category_id_fkey(name, slug, attribute_schema), subcategory:categories!listings_subcategory_id_fkey(name, slug), region:regions(name), area:areas(name), images:listing_images(url, alt_text, position)")
     .eq("id", id)
     .maybeSingle();
   if (!listing) return null;
@@ -127,7 +127,7 @@ export default async function ListingPage({ params }: Params) {
               <div><dt className="text-muted">Condition</dt><dd className="font-medium">{t(`condition.${listing.condition}`)}</dd></div>
               <div><dt className="text-muted">Quantity</dt><dd className="font-medium">{listing.quantity > 0 ? listing.quantity : "Out of stock"}</dd></div>
               <div className="col-span-2 flex items-center gap-1"><MapPin className="size-4 text-muted" aria-hidden />
-                <dd>{[listing.city, listing.region?.name, country?.name].filter(Boolean).join(", ")}</dd></div>
+                <dd>{[listing.city, listing.area?.name, listing.region?.name, country?.name].filter(Boolean).join(", ")}</dd></div>
             </dl>
             <p className="flex flex-wrap gap-3 text-xs text-muted">
               <span className="flex items-center gap-1"><Clock className="size-3.5" aria-hidden /> Listed {new Date(listing.published_at ?? listing.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>

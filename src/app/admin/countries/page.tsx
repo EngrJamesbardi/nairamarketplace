@@ -23,7 +23,7 @@ export default async function Countries({ searchParams }: { searchParams: Promis
               </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked={c.is_active} className="size-4 accent-[var(--brand)]" /> Active</label>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="allow_cross_border_discovery" defaultChecked={c.allow_cross_border_discovery} className="size-4 accent-[var(--brand)]" /> Discoverable abroad</label>
-              <label className="text-xs">Free active listings<input name="free_active_listing_limit" type="number" min={0} defaultValue={c.free_active_listing_limit} className="input min-h-9 py-1" /></label>
+              <label className="text-xs">Free active listings (default 15)<input name="free_active_listing_limit" type="number" min={0} defaultValue={c.free_active_listing_limit} className="input min-h-9 py-1" /></label>
               <label className="text-xs">Listing duration (days)<input name="listing_duration_days" type="number" min={1} max={365} defaultValue={c.listing_duration_days} className="input min-h-9 py-1" /></label>
               <label className="text-xs sm:col-span-2">Payment provider
                 <select name="payment_provider" defaultValue={c.payment_provider ?? ""} className="input min-h-9 py-1">
@@ -37,6 +37,7 @@ export default async function Countries({ searchParams }: { searchParams: Promis
           </li>
         ))}
       </ul>
+      <p className="text-xs text-muted">The free allowance is checked only when a listing is published or reactivated: lowering it never unpublishes existing listings. Paid plans (Subscription plans) set higher allowances.</p>
       <p className="text-xs text-muted">Adding a new country is a database migration (currency, phone format, regions) followed by activation here. See docs/ADDING_A_COUNTRY.md.</p>
     </>
   );

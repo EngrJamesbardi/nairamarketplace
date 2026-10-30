@@ -4,14 +4,15 @@ import { unstable_rethrow } from "next/navigation";
 import { saveListing } from "@/app/actions/listings";
 import { FormMessage, SubmitButton, FieldError } from "@/components/FormStatus";
 import { ImageUploader } from "@/components/ImageUploader";
-import { CONDITIONS, DELIVERY_OPTIONS } from "@/lib/validation";
-import { minorToMajorString } from "@/lib/money";
+import { LocationFields, type Option } from "@/components/LocationFields";
+import { CONDITIONS, DELIVERY_OPTIONS, MAX_IMAGES } from "@/lib/validation";
+import { formatMoney, minorToMajorString } from "@/lib/money";
 import { t } from "@/i18n";
 import type { Database } from "@/types/database";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
-type Category = { id: number; parent_id: number | null; name: string; attribute_schema: unknown };
-type Region = { id: number; name: string };
+type Category = { id: number; parent_id: number | null; name: string; attribute_schema: unknown; min_images: number };
+export type PromotionPackage = { id: string; name: string; description: string | null; days: number; price_minor: number; currency: string };
 type Attr = { key: string; label: string; type: "text" | "number" | "select"; options?: string[]; min?: number; max?: number };
 
 export function ListingForm({
@@ -22,17 +23,29 @@ export function ListingForm({
   regions,
   currency,
   regionLabel,
+  areaLabel,
+  initialAreas,
   sellerDefaults,
   requestId,
+  packages = [],
+  allowance,
 }: {
   userId: string;
   listing?: Listing;
   images?: { path: string; url: string }[];
   categories: Category[];
-  regions: Region[];
+  regions: Option[];
   currency: string;
   regionLabel: string;
+  /** e.g. "LGA"; null for markets without second-level locations. */
+  areaLabel: string | null;
+  /** LGAs of the initially selected state. */
+  initialAreas: Option[];
   sellerDefaults: { regionId: number | null; city: string | null; deliveryOptions: string[] };
+  /** Paid promotion packages for this market (empty: no promotion step). Only offered when publishing. */
+  packages?: PromotionPackage[];
+  /** Active listings and the seller's allowance, to warn before they fill in the form. */
+  allowance?: { active: number; limit: number };
   /** New listings only: generated on the server so repeat submissions of this form are recognised. */
   requestId?: string;
 }) {
@@ -56,6 +69,9 @@ export function ListingForm({
   const attrs = ((categories.find((c) => c.id === categoryId)?.attribute_schema ?? []) as Attr[]) || [];
   const currentAttrs = (listing?.attributes ?? {}) as Record<string, string | number>;
   const isDraft = !listing || listing.status === "draft";
+  const minImages = categories.find((c) => c.id === categoryId)?.min_images ?? 4;
+  const [promo, setPromo] = useState("");
+  const atLimit = isDraft && allowance && allowance.active >= allowance.limit;
 
   return (
     <form
@@ -78,7 +94,8 @@ export function ListingForm({
 
       <section className="card space-y-3 p-5">
         <h2 className="text-lg font-bold">Photos</h2>
-        <ImageUploader userId={userId} initial={images} />
+        <p className="text-sm text-muted">Add {minImages} to {MAX_IMAGES} clear photos from different angles. All photos belong to this one listing.</p>
+        <ImageUploader userId={userId} initial={images} max={MAX_IMAGES} min={isDraft || images.length >= minImages ? minImages : 1} />
         <FieldError state={state} name="images" />
       </section>
 
@@ -173,18 +190,12 @@ export function ListingForm({
 
       <section className="card space-y-4 p-5">
         <h2 className="text-lg font-bold">Location & delivery</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="regionId">{regionLabel}</label>
-            <select id="regionId" name="regionId" defaultValue={listing?.region_id ?? sellerDefaults.regionId ?? ""} className="input">
-              <option value="">Choose…</option>
-              {regions.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="city">City or area</label>
-            <input id="city" name="city" maxLength={80} defaultValue={listing?.city ?? sellerDefaults.city ?? ""} className="input" />
-          </div>
+        <LocationFields regions={regions} regionLabel={regionLabel} areaLabel={areaLabel} idPrefix="listing"
+          initialRegionId={listing ? listing.region_id : sellerDefaults.regionId} initialAreaId={listing?.area_id ?? null} initialAreas={initialAreas}
+          regionError={<FieldError state={state} name="regionId" />} areaError={<FieldError state={state} name="areaId" />} />
+        <div className="sm:w-1/2 sm:pr-2">
+          <label className="label" htmlFor="city">Town or area <span className="font-normal text-muted">(optional)</span></label>
+          <input id="city" name="city" maxLength={80} defaultValue={listing?.city ?? sellerDefaults.city ?? ""} className="input" placeholder="e.g. Asaba, Okpanam" />
         </div>
         <fieldset>
           <legend className="label">How can buyers get it?</legend>
@@ -205,12 +216,45 @@ export function ListingForm({
         <p className="text-xs text-muted">{t("fulfilment.notice")}</p>
       </section>
 
+      {isDraft && packages.length > 0 && (
+        <section className="card space-y-3 p-5" aria-labelledby="promo-heading" data-testid="promotion-step">
+          <h2 id="promo-heading" className="text-lg font-bold">Promotion <span className="text-sm font-normal text-muted">(optional)</span></h2>
+          <p className="text-sm text-muted">
+            Promoted listings appear in a clearly labelled &ldquo;Sponsored&rdquo; slot on the homepage, at the top of matching searches and in their
+            category, so more buyers see them. Your listing is published either way; a promotion starts only after your payment is confirmed.
+          </p>
+          <fieldset className="grid gap-2 sm:grid-cols-3">
+            <legend className="sr-only">Choose how to publish</legend>
+            {[{ id: "", name: "Standard listing", description: "Published normally. No payment.", days: 0, price_minor: 0, currency }, ...packages].map((p) => (
+              <label key={p.id || "standard"} className="flex min-h-11 cursor-pointer flex-col gap-1 rounded-xl border border-line p-3 text-sm has-[:checked]:border-brand has-[:checked]:bg-cream">
+                <span className="flex items-center gap-2 font-semibold">
+                  <input type="radio" name="promotionPackage" value={p.id} checked={promo === p.id} onChange={() => setPromo(p.id)} className="accent-[var(--brand)]" />
+                  {p.name}
+                </span>
+                <span className="text-lg font-extrabold text-brand-strong">{p.id ? formatMoney(p.price_minor, p.currency) : "FREE"}</span>
+                {p.description && <span className="text-xs text-muted">{p.description}</span>}
+              </label>
+            ))}
+          </fieldset>
+          {promo && <p className="text-xs text-muted">After you tap Publish, you&apos;ll go to the payment page. If you don&apos;t complete payment, the listing stays published as a standard listing. Promotions apply only when publishing, not to drafts.</p>}
+        </section>
+      )}
+
+      {atLimit && (
+        <p role="status" className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-ink" data-testid="limit-warning">
+          You have {allowance!.active} active listings, which is your limit of {allowance!.limit}. You can save this as a draft, or{" "}
+          <a href="/dashboard/plan" className="link">upgrade your plan</a> to publish more. Pausing, archiving or marking a listing as sold also frees a slot.
+        </p>
+      )}
       <FormMessage state={state} />
+      {state?.code === "listing_limit" && (
+        <p className="text-sm"><a href="/dashboard/plan" className="btn-primary">See upgrade options</a> <a href="/dashboard/listings?status=active" className="link ml-2">Manage active listings</a></p>
+      )}
       {state?.redirectTo && (
         <p role="status" className="text-sm text-success">Saved. <a href={state.redirectTo} className="link">Go to your listings</a></p>
       )}
       <div className="flex flex-wrap gap-3">
-        <SubmitButton name="status" value="active" pendingText="Saving…" pending={pending}>{isDraft ? "Publish listing" : "Save changes"}</SubmitButton>
+        <SubmitButton name="status" value="active" pendingText="Saving…" pending={pending}>{isDraft ? (promo ? "Publish and pay for promotion" : "Publish listing") : "Save changes"}</SubmitButton>
         {isDraft && <SubmitButton name="status" value="draft" className="btn-secondary" pendingText="Saving…" pending={pending}>Save as draft</SubmitButton>}
       </div>
     </form>

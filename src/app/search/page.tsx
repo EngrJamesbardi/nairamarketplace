@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SlidersHorizontal } from "lucide-react";
 import { ProductCard, ProductGrid, EmptyState } from "@/components/ProductCard";
-import { getActiveCountries, getCategories, getRegions, getSelectedCountry } from "@/lib/market";
+import { getActiveCountries, getAreas, getCategories, getRegions, getSelectedCountry } from "@/lib/market";
+import { LocationFields } from "@/components/LocationFields";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { favouriteIds } from "@/lib/listings";
@@ -32,7 +33,21 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
   const q = one(sp.q).slice(0, 100);
   const category = one(sp.category);
-  const regionId = Number(one(sp.region)) || null;
+  // Location filters are ids validated against this market: an unknown state is ignored, and an LGA must belong to the
+  // chosen state (or, if no state was sent, it selects its own state).
+  let regionId = regions.find((r) => r.id === Number(one(sp.region)))?.id ?? null;
+  let areaId: number | null = null;
+  const areaParam = Number(one(sp.area)) || null;
+  if (areaParam && country.area_label) {
+    const { data: area } = await (await createClient()).from("areas").select("id, region_id").eq("id", areaParam).eq("country_code", country.code).maybeSingle();
+    if (area && (!regionId || area.region_id === regionId)) {
+      areaId = area.id;
+      regionId = area.region_id;
+    }
+  }
+  const areas = await getAreas(regionId);
+  const regionName = regions.find((r) => r.id === regionId)?.name;
+  const areaName = areas.find((a) => a.id === areaId)?.name;
   const city = one(sp.city).slice(0, 80) || null;
   const conditions = (Array.isArray(sp.condition) ? sp.condition : sp.condition ? [sp.condition] : []).filter((c) =>
     (CONDITIONS as readonly string[]).includes(c),
@@ -56,6 +71,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     p_country: country.code,
     p_category: category || undefined,
     p_region_id: km ? undefined : regionId ?? undefined,
+    p_area_id: km ? undefined : areaId ?? undefined,
     p_city: city ?? undefined,
     p_min_price: minPrice !== null ? Number(minPrice) : undefined,
     p_max_price: maxPrice !== null ? Number(maxPrice) : undefined,
@@ -99,12 +115,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="h1">
           {q ? <>Results for &ldquo;{q}&rdquo;</> : activeCat ? activeCat.name : "Browse listings"}
+          {(areaName || regionName) && !km && <span className="font-normal text-muted"> in {[areaName, regionName].filter(Boolean).join(", ")}</span>}
         </h1>
         <p className="text-sm text-muted">
           {countryFlag(country.code)} {country.name} · prices in {country.currency_code}
           {country.code !== selected.code && (
             <>
-              {" "}· <Link className="link" href={qs({ country: null, min: null, max: null, region: null, page: null })}>Back to {selected.name}</Link>
+              {" "}· <Link className="link" href={qs({ country: null, min: null, max: null, region: null, area: null, page: null })}>Back to {selected.name}</Link>
             </>
           )}
         </p>
@@ -146,13 +163,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                 ))}
               </select>
             </div>
-            <div>
-              <label className="label" htmlFor="f-region">{country.region_label}</label>
-              <select id="f-region" name="region" defaultValue={regionId ?? ""} className="input">
-                <option value="">All</option>
-                {regions.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            </div>
+            <LocationFields key={country.code} regions={regions} regionLabel={country.region_label} areaLabel={country.area_label} idPrefix="f"
+              regionName="region" areaName="area" anyLabel="All" initialRegionId={regionId} initialAreaId={areaId} initialAreas={areas} className="space-y-4" />
             <div>
               <label className="label" htmlFor="f-city">City or area</label>
               <input id="f-city" name="city" defaultValue={city ?? ""} className="input" maxLength={80} />

@@ -22,7 +22,7 @@ export default async function PayReturn({ searchParams }: { searchParams: Promis
       </div>
     );
   }
-  const next = p.purpose === "credits" ? "/dashboard/credits" : "/dashboard/plan";
+  const next = p.purpose === "credits" ? "/dashboard/credits" : p.purpose === "promotion" ? "/dashboard/promotions" : "/dashboard/plan";
   return (
     <div className="page max-w-md space-y-4">
       {p.status === "pending" && <meta httpEquiv="refresh" content="3" />}
@@ -39,10 +39,13 @@ export default async function PayReturn({ searchParams }: { searchParams: Promis
         </h1>
         <p className="text-sm text-muted">
           {p.status === "succeeded"
-            ? p.purpose === "credits" ? `${p.credits} credits have been added to your account.` : "Your plan is active."
+            ? p.purpose === "credits" ? `${p.credits} credits have been added to your account.`
+              : p.purpose === "promotion" ? `Your listing is promoted for ${p.promotion_days} days.` : "Your plan is active."
             : p.status === "pending"
-              ? "We add credits only after the payment provider confirms your payment. This page refreshes automatically."
-              : p.failure_reason ?? "The payment was declined or cancelled. You have not been charged by us."}
+              ? p.purpose === "promotion"
+                ? "Your listing is already published. The promotion starts only after the payment provider confirms your payment. This page refreshes automatically."
+                : "We add credits only after the payment provider confirms your payment. This page refreshes automatically."
+              : `${p.failure_reason ?? "The payment was declined or cancelled. You have not been charged by us."}${p.purpose === "promotion" ? " Your listing is still published as a standard listing." : ""}`}
         </p>
         <p className="text-xs text-muted">{formatMoney(p.amount_minor, p.currency)} · ref {p.reference}</p>
         <Link className="btn-primary" href={next}>Continue</Link>

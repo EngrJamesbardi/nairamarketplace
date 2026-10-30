@@ -68,6 +68,9 @@ export function ProductCard({
             {item.status === "reserved" && <span className="badge bg-warning text-white">Reserved</span>}
             {item.status === "sold" && <span className="badge bg-ink text-canvas">Sold</span>}
           </div>
+          {(item.image_count ?? 0) > 1 && (
+            <span className="badge absolute bottom-2 right-2 bg-ink/70 text-canvas" aria-label={`${item.image_count} photos`}>{item.image_count} photos</span>
+          )}
         </div>
         <div className="flex flex-1 flex-col gap-1 p-3">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-ink">{item.title}</h3>
@@ -80,7 +83,7 @@ export function ProductCard({
           <p className="text-xs text-muted">{item.condition ? t(`condition.${item.condition}` as never) : null}</p>
           <p className="flex items-center gap-1 truncate text-xs text-muted">
             <MapPin className="size-3.5 shrink-0" aria-hidden />
-            <span className="truncate">{[item.city, item.region_name].filter(Boolean).join(", ") || item.country_code}</span>
+            <span className="truncate">{[item.area_name ?? item.city, item.region_name].filter(Boolean).join(", ") || item.country_code}</span>
           </p>
           {item.shop_name && (
             <p className="mt-auto flex items-center gap-1 truncate pt-1 text-xs font-medium text-ink">

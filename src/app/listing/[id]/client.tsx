@@ -1,6 +1,6 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
-import { Flag, Share2 } from "lucide-react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Flag, Share2, X } from "lucide-react";
 import { contactSeller, makeOffer, recordView } from "@/app/actions/messages";
 import { submitReport } from "@/app/actions/social";
 import { FormMessage, SubmitButton, FieldError } from "@/components/FormStatus";
@@ -12,27 +12,80 @@ export function ViewTracker({ listingId }: { listingId: string }) {
   return null;
 }
 
+/**
+ * Product photos: swipe (scroll-snap) on phones, arrows and thumbnails everywhere, keyboard arrows, and a full-screen
+ * view. The first photo is the seller's cover photo.
+ */
 export function Gallery({ images, title }: { images: { url: string; alt_text: string | null }[]; title: string }) {
   const [i, setI] = useState(0);
+  const [zoom, setZoom] = useState(false);
+  const track = useRef<HTMLDivElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+
+  const go = useCallback((n: number) => {
+    const el = track.current;
+    const next = Math.max(0, Math.min(images.length - 1, n));
+    setI(next);
+    el?.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+  }, [images.length]);
+
+  useEffect(() => {
+    if (zoom) dialog.current?.showModal();
+    else dialog.current?.close();
+  }, [zoom]);
+
   if (images.length === 0)
     return <div className="card flex aspect-square items-center justify-center text-muted">No photos provided</div>;
+  const arrow = "absolute top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface/90 text-ink shadow hover:text-brand disabled:hidden";
   return (
-    <div>
-      <div className="card overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={images[i].url} alt={images[i].alt_text ?? title} className="aspect-square w-full bg-canvas object-contain" />
+    <div data-testid="gallery" aria-roledescription="carousel" aria-label={`Photos of ${title}`}
+      onKeyDown={(e) => { if (e.key === "ArrowRight") go(i + 1); if (e.key === "ArrowLeft") go(i - 1); }}>
+      <div className="card relative overflow-hidden">
+        <div ref={track} className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={(e) => { const el = e.currentTarget; const n = Math.round(el.scrollLeft / el.clientWidth); if (n !== i) setI(n); }}>
+          {images.map((img, idx) => (
+            <button key={img.url} type="button" className="w-full shrink-0 snap-center" onClick={() => setZoom(true)}
+              aria-label={`Photo ${idx + 1} of ${images.length}. Open full screen`} tabIndex={idx === i ? 0 : -1}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt={img.alt_text ?? `${title}, photo ${idx + 1}`} loading={idx === 0 ? "eager" : "lazy"}
+                className="aspect-square w-full bg-canvas object-contain" />
+            </button>
+          ))}
+        </div>
+        {images.length > 1 && (
+          <>
+            <button type="button" className={`${arrow} left-2`} onClick={() => go(i - 1)} disabled={i === 0} aria-label="Previous photo"><ChevronLeft className="size-5" aria-hidden /></button>
+            <button type="button" className={`${arrow} right-2`} onClick={() => go(i + 1)} disabled={i === images.length - 1} aria-label="Next photo"><ChevronRight className="size-5" aria-hidden /></button>
+            <span className="badge absolute bottom-2 right-2 bg-ink/75 text-canvas" aria-live="polite" data-testid="gallery-counter">{i + 1} / {images.length}</span>
+          </>
+        )}
       </div>
       {images.length > 1 && (
-        <div className="mt-2 flex gap-2 overflow-x-auto" role="tablist" aria-label="Photos">
+        <div className="mt-2 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Photo thumbnails">
           {images.map((img, idx) => (
-            <button key={img.url} role="tab" aria-selected={idx === i} aria-label={`Photo ${idx + 1}`} onClick={() => setI(idx)}
-              className={`size-16 shrink-0 overflow-hidden rounded-lg border-2 ${idx === i ? "border-brand" : "border-transparent"}`}>
+            <button key={img.url} type="button" role="tab" aria-selected={idx === i} aria-label={`Show photo ${idx + 1}`} onClick={() => go(idx)}
+              className={`size-16 shrink-0 overflow-hidden rounded-lg border-2 ${idx === i ? "border-brand" : "border-transparent opacity-80 hover:opacity-100"}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt="" className="size-full object-cover" />
+              <img src={img.url} alt="" loading="lazy" className="size-full object-cover" />
             </button>
           ))}
         </div>
       )}
+      <dialog ref={dialog} onClose={() => setZoom(false)} aria-label={`${title}, photo ${i + 1} of ${images.length}`}
+        className="m-0 h-full max-h-none w-full max-w-none bg-ink/95 p-0 backdrop:bg-ink/80">
+        <div className="relative flex h-full items-center justify-center p-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={images[i].url} alt={images[i].alt_text ?? `${title}, photo ${i + 1}`} className="max-h-full max-w-full object-contain" />
+          <button type="button" onClick={() => setZoom(false)} aria-label="Close full screen" className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-full bg-surface text-ink"><X className="size-5" aria-hidden /></button>
+          {images.length > 1 && (
+            <>
+              <button type="button" className={`${arrow} left-3`} onClick={() => go(i - 1)} disabled={i === 0} aria-label="Previous photo"><ChevronLeft className="size-5" aria-hidden /></button>
+              <button type="button" className={`${arrow} right-3`} onClick={() => go(i + 1)} disabled={i === images.length - 1} aria-label="Next photo"><ChevronRight className="size-5" aria-hidden /></button>
+              <span className="badge absolute bottom-4 left-1/2 -translate-x-1/2 bg-surface text-ink">{i + 1} / {images.length}</span>
+            </>
+          )}
+        </div>
+      </dialog>
     </div>
   );
 }
