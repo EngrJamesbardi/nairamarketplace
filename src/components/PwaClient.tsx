@@ -20,7 +20,13 @@ export function PwaClient() {
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
 
-    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+    // `next dev` serves unhashed scripts that change on every edit, so a service worker there serves stale code
+    // after an update ("Something went wrong"). In development, remove any worker and its caches instead.
+    // NEXT_PUBLIC_PWA_DEV=1 keeps it on for testing the PWA against the dev server.
+    if ("serviceWorker" in navigator && process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_PWA_DEV !== "1") {
+      navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+      caches?.keys().then((keys) => keys.filter((k) => k.startsWith("nm-")).forEach((k) => caches.delete(k)));
+    } else if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).then((reg) => {
         if (reg.waiting && navigator.serviceWorker.controller) setWaiting(reg.waiting);
         reg.addEventListener("updatefound", () => {
