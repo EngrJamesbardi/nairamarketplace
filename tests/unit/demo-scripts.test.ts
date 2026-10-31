@@ -36,7 +36,7 @@ describe("seed account detection", () => {
     expect(lib.isSeedAccount({ id: "a", email: "admin@naira.test" }, seedIds)).toBe(true);
     expect(lib.isSeedAccount({ id: "a", email: "ADMIN@NAIRA.TEST" }, seedIds)).toBe(true);
     expect(lib.isSeedAccount({ id: "b", email: "friend@naira.test" }, seedIds)).toBe(false);
-    expect(lib.isSeedAccount({ id: "a", email: "jamesbardi777@gmail.com" }, seedIds)).toBe(false);
+    expect(lib.isSeedAccount({ id: "a", email: "someone@example.com" }, seedIds)).toBe(false);
   });
 });
 
@@ -83,5 +83,20 @@ describe("listing copy", () => {
 describe("argument parsing", () => {
   it("collects repeated flags", () => {
     expect(lib.parseArgs(["--listing", "a", "--listing", "b", "--out", "d"])).toEqual({ listing: ["a", "b"], out: "d" });
+  });
+});
+
+describe("seed password check", () => {
+  it("counts the password as dead only when Supabase rejects the credentials", () => {
+    expect(lib.classifySignInProbe({ data: { session: null }, error: { code: "invalid_credentials", message: "Invalid login credentials", status: 400 } })).toBe("rejected");
+    expect(lib.classifySignInProbe({ data: {}, error: { message: "Invalid login credentials" } })).toBe("rejected");
+  });
+  it("never treats a rate limit or network error as proof", () => {
+    expect(lib.classifySignInProbe({ data: {}, error: { code: "over_request_rate_limit", message: "Request rate limit reached", status: 429 } })).toBe("unknown");
+    expect(lib.classifySignInProbe({ data: {}, error: { message: "fetch failed" } })).toBe("unknown");
+    expect(lib.classifySignInProbe({ data: {}, error: null })).toBe("unknown");
+  });
+  it("reports a successful sign-in as still working", () => {
+    expect(lib.classifySignInProbe({ data: { session: { access_token: "x" } }, error: null })).toBe("accepted");
   });
 });

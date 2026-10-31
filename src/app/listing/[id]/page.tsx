@@ -10,6 +10,7 @@ import { formatMoney, minorToMajorString } from "@/lib/money";
 import { t } from "@/i18n";
 import { ViewTracker, Gallery, ContactForm, OfferForm, ReportForm, ShareButton } from "./client";
 import { WhatsAppLink } from "@/components/WhatsAppLink";
+import { isDemoSite } from "@/lib/site-mode";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -41,7 +42,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title: `${listing.title} – ${price}`,
     description: listing.description.slice(0, 160),
     alternates: { canonical: `/listing/${listing.id}` },
-    robots: { index: listing.status === "active" && listing.moderation_status === "approved" && !listing.is_seed },
+    // The demo site is never indexed, whatever the listing (the layout's noindex is replaced by this page-level value).
+    robots: isDemoSite()
+      ? { index: false, follow: false }
+      : { index: listing.status === "active" && listing.moderation_status === "approved" && !listing.is_seed },
     openGraph: { title: listing.title, description: listing.description.slice(0, 160), images: img ? [img] : undefined, type: "website" },
   };
 }

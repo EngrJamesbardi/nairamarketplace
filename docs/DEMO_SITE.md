@@ -22,7 +22,9 @@ Every step runs from a trusted machine with the **demo** project's URL and secre
      node scripts/demo/harden-demo.mjs --project-ref <demo-ref>
    ```
    Every `@naira.test` seed account gets a random password nobody knows, every seed role (including admin) is removed, and the script
-   proves `Password123!` no longer signs in. It exits non-zero if anything is left.
+   proves `Password123!` no longer signs in. It exits 2 if the password still works or a seed role remains, and 3 if Supabase
+   rate-limited the check (wait a few minutes and run it again; repeating is safe).
+   **If the demo database is ever re-seeded or reset, run this script again straight away**: seeding restores the public password.
 3. Copy extra hand-made listings from a local database (read-only on the local side):
    ```bash
    LOCAL_SUPABASE_SERVICE_ROLE_KEY=<local key from `npx supabase status`> \

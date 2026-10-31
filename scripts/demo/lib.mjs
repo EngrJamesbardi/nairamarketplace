@@ -13,6 +13,18 @@ export const LISTING_FIELDS = [
 /** Storefront fields copied. Contact details (email, phone, WhatsApp) and image URLs are deliberately left behind. */
 export const SELLER_FIELDS = ["shop_name", "slug", "seller_type", "description", "country_code", "city", "business_hours", "delivery_options", "delivery_notes"];
 
+/**
+ * Classifies a sign-in attempt made with the public seed password.
+ * "rejected" only when Supabase says the credentials are wrong; a rate limit, network error or anything else is
+ * "unknown", so a temporary failure is never mistaken for proof that the password is dead.
+ */
+export function classifySignInProbe({ data, error }) {
+  if (data?.session) return "accepted";
+  if (!error) return "unknown";
+  if (error.code === "invalid_credentials" || /invalid login credentials/i.test(error.message ?? "")) return "rejected";
+  return "unknown";
+}
+
 export function pick(obj, fields) {
   const out = {};
   for (const f of fields) if (obj[f] !== undefined) out[f] = obj[f];
