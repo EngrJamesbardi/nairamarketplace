@@ -31,7 +31,7 @@ export async function deleteAccount(_: ActionState, formData: FormData): Promise
   const { supabase, user } = await getSession();
   if (!user) return { error: "Please sign in again." };
   if (String(formData.get("confirm") ?? "").trim() !== "DELETE") return { fieldErrors: { confirm: "Type DELETE to confirm" } };
-  if (!rateLimit(`delete:${user.id}`, 3, 3600_000).ok) return { error: "Too many attempts. Try again later." };
+  if (!(await rateLimit(`delete:${user.id}`, 3, 3600_000)).ok) return { error: "Too many attempts. Try again later." };
   const { error } = await supabase.rpc("anonymise_my_account");
   if (error) return { error: friendlyError(error) };
   const admin = createAdminClient();

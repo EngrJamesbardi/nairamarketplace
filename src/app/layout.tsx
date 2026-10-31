@@ -7,6 +7,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
 import { PwaClient } from "@/components/PwaClient";
 import { ImpressionTracker } from "@/components/ImpressionTracker";
+import { DemoBanner } from "@/components/DemoBanner";
+import { isDemoSite } from "@/lib/site-mode";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -24,6 +26,7 @@ export const metadata: Metadata = {
   },
   openGraph: { type: "website", siteName: "Naira Marketplace", locale: "en" },
   formatDetection: { telephone: false },
+  ...(isDemoSite() ? { robots: { index: false, follow: false } } : {}),
 };
 
 export const viewport: Viewport = {
@@ -41,6 +44,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-surface focus:p-2">
           Skip to content
         </a>
+        <DemoBanner />
         <Header />
         <PwaClient />
         <ImpressionTracker />

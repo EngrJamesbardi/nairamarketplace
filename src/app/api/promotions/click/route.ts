@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const target = NextResponse.redirect(new URL(`/listing/${l.data}`, request.nextUrl.origin));
   const ua = request.headers.get("user-agent") ?? "";
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  if (c.success && !/bot|crawl|spider|preview/i.test(ua) && rateLimit(`promo-click:${ip}`, 60, 60_000).ok) {
+  if (c.success && !/bot|crawl|spider|preview/i.test(ua) && (await rateLimit(`promo-click:${ip}`, 60, 60_000)).ok) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const key = await viewerKey(user?.id);

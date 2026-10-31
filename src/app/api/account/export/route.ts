@@ -12,7 +12,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
-  if (!rateLimit(`export:${user.id}`, 5, 3600_000).ok) return NextResponse.json({ error: "Too many exports. Try again later." }, { status: 429 });
+  if (!(await rateLimit(`export:${user.id}`, 5, 3600_000)).ok) return NextResponse.json({ error: "Too many exports. Try again later." }, { status: 429 });
 
   const uid = user.id;
   const [profile, roles, seller, listings, favourites, following, followers, blocked, convs, offers, reviewsWritten, reviewsReceived, reports, notifications, verifications] =

@@ -11,7 +11,7 @@ const site = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export async function signUp(_: ActionState, formData: FormData): Promise<ActionState> {
   const ip = await clientIp();
-  if (!rateLimit(`signup:${ip}`, 5, 60 * 60 * 1000).ok) return { error: "Too many sign-up attempts. Please try again later." };
+  if (!(await rateLimit(`signup:${ip}`, 5, 60 * 60 * 1000)).ok) return { error: "Too many sign-up attempts. Please try again later." };
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const { email, password, displayName, countryCode } = parsed.data;
@@ -36,7 +36,7 @@ export async function resendConfirmation(_: ActionState, formData: FormData): Pr
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { fieldErrors: { email: "Enter a valid email address" } };
   const ip = await clientIp();
-  if (!rateLimit(`resend:${ip}`, 10, 60 * 60 * 1000).ok || !rateLimit(`resend:${email}`, 3, 15 * 60 * 1000).ok)
+  if (!(await rateLimit(`resend:${ip}`, 10, 60 * 60 * 1000)).ok || !(await rateLimit(`resend:${email}`, 3, 15 * 60 * 1000)).ok)
     return { error: "Too many requests. Please wait 15 minutes before asking for another email." };
   const supabase = await createClient();
   await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${site()}/auth/callback?next=/onboarding/welcome` } });
@@ -51,7 +51,7 @@ export async function signIn(_: ActionState, formData: FormData): Promise<Action
   const parsed = signInSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const ip = await clientIp();
-  if (!rateLimit(`signin:${ip}:${parsed.data.email}`, 8, 10 * 60 * 1000).ok)
+  if (!(await rateLimit(`signin:${ip}:${parsed.data.email}`, 8, 10 * 60 * 1000)).ok)
     return { error: "Too many sign-in attempts. Please wait 10 minutes or reset your password." };
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -74,7 +74,7 @@ export async function signOut() {
 export async function requestPasswordReset(_: ActionState, formData: FormData): Promise<ActionState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const ip = await clientIp();
-  if (!rateLimit(`reset:${ip}`, 5, 15 * 60 * 1000).ok) return { error: "Too many requests. Please try again later." };
+  if (!(await rateLimit(`reset:${ip}`, 5, 15 * 60 * 1000)).ok) return { error: "Too many requests. Please try again later." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { fieldErrors: { email: "Enter a valid email address" } };
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${site()}/auth/callback?next=/auth/reset` });

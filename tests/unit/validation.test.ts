@@ -69,11 +69,11 @@ describe("phone numbers per country", () => {
 });
 
 describe("rate limiting", () => {
-  it("blocks after the limit within the window", () => {
+  it("blocks after the limit within the window", async () => {
     _resetRateLimits();
-    for (let i = 0; i < 3; i++) expect(rateLimit("k", 3, 60000).ok).toBe(true);
-    expect(rateLimit("k", 3, 60000).ok).toBe(false);
-    expect(rateLimit("other", 3, 60000).ok).toBe(true);
+    for (let i = 0; i < 3; i++) expect((await rateLimit("k", 3, 60000)).ok).toBe(true);
+    expect((await rateLimit("k", 3, 60000)).ok).toBe(false);
+    expect((await rateLimit("other", 3, 60000)).ok).toBe(true);
   });
 });
 
