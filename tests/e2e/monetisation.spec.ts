@@ -1,20 +1,40 @@
 import { test, expect } from "@playwright/test";
-import { signIn, hydrated, serviceClient } from "./helpers";
-
-const TUNDE = "00000000-0000-4000-8000-000000000003";
+import { signIn, hydrated, serviceClient, uid } from "./helpers";
 
 async function balance(page: import("@playwright/test").Page) {
   await page.goto("/dashboard/credits");
   return Number((await page.getByTestId("credit-balance").innerText()).replace(/\D/g, ""));
 }
 
-test.afterAll(async () => {
+/**
+ * A new seller (with one live listing) for each payment test. Checkouts are limited to 10 per user per hour in the
+ * database, so reusing a demo seller made back-to-back runs fail on that (correct) limit. The listing is removed by
+ * global-teardown.ts; the account is left in place.
+ */
+async function freshSeller() {
   const db = await serviceClient();
-  await db.from("promotion_campaigns").update({ status: "cancelled" }).eq("seller_id", TUNDE).in("status", ["active", "paused"]);
-});
+  const id = uid();
+  const email = `pay-${id}@example.test`;
+  const { data: created, error } = await db.auth.admin.createUser({
+    email, password: "Testpass123", email_confirm: true, user_metadata: { display_name: `Pay ${id}`, country_code: "NG" },
+  });
+  expect(error).toBeNull();
+  const userId = created.user!.id;
+  const { data: lagos } = await db.from("regions").select("id").eq("country_code", "NG").eq("name", "Lagos").single();
+  const { data: cat } = await db.from("categories").select("id").eq("slug", "phones-electronics").single();
+  await db.from("seller_profiles").insert({ user_id: userId, shop_name: `Pay Shop ${id}`, slug: `pay-shop-${id}`, country_code: "NG", region_id: lagos!.id });
+  const title = `Pay radio ${id}`;
+  const { error: listingError } = await db.from("listings").insert({
+    seller_id: userId, country_code: "NG", region_id: lagos!.id, title, description: "Portable radio for the promotion test.",
+    category_id: cat!.id, price_minor: 1_500_000, currency: "NGN", condition: "used_good" as const,
+  });
+  expect(listingError).toBeNull();
+  return { email, title };
+}
 
 test("seller buys credits through a verified (mock) payment, promotes a listing, and sees real impressions and clicks", async ({ page, browser, baseURL }) => {
-  await signIn(page, "tunde@naira.test");
+  const seller = await freshSeller();
+  await signIn(page, seller.email, "Testpass123");
   const start = await balance(page);
 
   // A return URL alone grants nothing: start a checkout, then jump straight to the return page.
@@ -38,10 +58,11 @@ test("seller buys credits through a verified (mock) payment, promotes a listing,
   await expect(page.getByTestId("payment-status")).toHaveAttribute("data-status", "failed");
   expect(await balance(page)).toBe(start + 50);
 
-  // Promote the first listing on the homepage for 1 day (25 credits).
+  // Promote the seller's listing on the homepage for 1 day (25 credits).
   await page.goto("/dashboard/promotions");
   await hydrated(page);
   const title = (await page.getByLabel("Listing").locator("option").first().innerText()).trim();
+  expect(title).toContain(seller.title);
   await page.getByLabel(/Homepage/).check();
   await page.getByLabel("Days", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Start promotion" }).click();
@@ -74,7 +95,8 @@ test("seller buys credits through a verified (mock) payment, promotes a listing,
 });
 
 test("seller upgrades to a paid plan and gets the higher listing allowance", async ({ page }) => {
-  await signIn(page, "tunde@naira.test");
+  const seller = await freshSeller();
+  await signIn(page, seller.email, "Testpass123");
   await page.goto("/dashboard/plan");
   const plan = page.getByRole("listitem").filter({ hasText: "Trader Plus" });
   await plan.getByRole("button").click();
