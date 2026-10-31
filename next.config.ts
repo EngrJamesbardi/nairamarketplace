@@ -8,6 +8,9 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
+// The demo site (NEXT_PUBLIC_SITE_MODE=demo) also tells crawlers not to index any response, including images and API routes.
+const demoHeaders = process.env.NEXT_PUBLIC_SITE_MODE === "demo" ? [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] : [];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Pin the workspace root so a stray lockfile in a parent folder (e.g. ~/package-lock.json) isn't picked up.
@@ -17,7 +20,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      { source: "/:path*", headers: securityHeaders },
+      { source: "/:path*", headers: [...securityHeaders, ...demoHeaders] },
       {
         source: "/sw.js",
         headers: [

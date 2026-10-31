@@ -53,12 +53,17 @@ Any Node 20+ host works (Vercel, Render, Fly.io, a VPS with `npm run build && np
 | `CRON_SECRET` | 32+ random characters |
 | `ANALYTICS_SALT` | Random; used to hash viewer keys for sponsored-event de-duplication |
 | `RATE_LIMIT_SCALE` | **Leave unset** in production (test-only multiplier) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Recommended on Vercel. Shared store for the app-level rate limits |
+| `NEXT_PUBLIC_SITE_MODE` | `demo` on the demo site only (banner + no indexing). Unset in production |
 
 HTTPS is required: service workers, secure cookies and HSTS depend on it.
 
-**Multiple instances:** the app-level rate limiter (sign-in, sign-up, password reset, export, promotion events) is in-memory per
-instance. Before running more than one instance, back `src/lib/rate-limit.ts` with a shared store such as Redis or Upstash. Database-level
-limits are already shared.
+**Multiple instances (Vercel):** the app-level rate limiter (sign-in, sign-up, password reset, export, promotion events) uses Upstash
+Redis when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set, so every instance shares the same counters. Without them, or
+if Redis can't be reached, it falls back to per-instance memory. Database-level limits are always shared.
+
+**Vercel:** `vercel.json` runs the server functions in London (`lhr1`, next to a London Supabase project) and schedules the daily
+maintenance job (section 5). The demo site is a separate Vercel project and Supabase project: see `docs/DEMO_SITE.md`.
 
 ## 4. Payments (when approved)
 
@@ -84,7 +89,8 @@ limits are already shared.
 - deletes view events older than 90 days
 - deletes promotion events older than 400 days
 
-Schedule it with Vercel Cron, GitHub Actions, any external cron service, or Supabase `pg_cron` (call `select purge_expired_data();`
+On Vercel this is already scheduled by `vercel.json` (03:15 UTC daily); Vercel sends the `CRON_SECRET` header automatically. Otherwise
+schedule it with GitHub Actions, any external cron service, or Supabase `pg_cron` (call `select purge_expired_data();`
 directly).
 
 ## 6. Backups and restore
