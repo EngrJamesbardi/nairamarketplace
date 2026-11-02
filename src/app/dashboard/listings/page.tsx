@@ -3,6 +3,7 @@ import { Plus, Eye, Heart, MessageCircle } from "lucide-react";
 import { requireSeller } from "@/lib/auth";
 import { PriceTag, EmptyState } from "@/components/ProductCard";
 import { ListingActions } from "../row-actions";
+import { EditorLink } from "@/components/EditorLink";
 import { t } from "@/i18n";
 import { LISTING_STATUSES } from "@/lib/validation";
 
@@ -45,7 +46,8 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/dashboard/listings/${l.id}/edit`} className="font-semibold hover:text-brand">{l.title}</Link>
+                    {/* A full page load, not <Link>: Next.js 15.5 client navigation into the editor can hang forever (see EditorLink). */}
+                    <EditorLink listingId={l.id} className="font-semibold hover:text-brand">{l.title}</EditorLink>
                     <span className="badge bg-cream text-brand-strong">{t(`status.${l.status}`)}</span>
                     {l.moderation_status !== "approved" && <span className="badge bg-warning/15 text-warning">{l.moderation_status.replace("_", " ")}</span>}
                     {promotedUntil.has(l.id) && <span className="badge bg-sponsored-bg text-sponsored-fg">Promoted until {new Date(promotedUntil.get(l.id)!).toLocaleDateString("en-GB")}</span>}
