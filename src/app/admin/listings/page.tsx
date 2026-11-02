@@ -8,7 +8,8 @@ type SP = { tab?: string; ok?: string; error?: string; q?: string };
 export default async function ModerationQueue({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const tab = sp.tab ?? "pending";
-  const { supabase } = await requireAdmin();
+  const { supabase, roles } = await requireAdmin();
+  const isAdmin = roles.includes("admin");
   let q = supabase.from("listings").select("id, title, description, status, moderation_status, moderation_note, price_minor, currency, price_type, country_code, created_at, seller_id, is_seed, seller:seller_profiles!listings_seller_shop_fkey(shop_name, slug)").order("created_at", { ascending: false }).limit(100);
   if (tab === "pending") q = q.eq("moderation_status", "pending_review");
   else if (tab === "removed") q = q.in("moderation_status", ["rejected", "removed"]);
@@ -47,6 +48,18 @@ export default async function ModerationQueue({ searchParams }: { searchParams: 
                 {l.moderation_status === "pending_review" && <button name="action" value="reject" className={small}>Reject</button>}
                 {l.moderation_status !== "removed" && <button name="action" value="remove" className={smallDanger}>Remove</button>}
               </Op>
+              {isAdmin && (
+                <details className="rounded-lg border border-danger/40 p-2">
+                  <summary className="cursor-pointer text-xs font-semibold text-danger">Delete permanently…</summary>
+                  <p className="my-1 text-xs text-muted">Cannot be undone. Deletes the listing and its photos. Use Remove to hide it reversibly instead. Conversations and offers about it are kept.</p>
+                  <Op op="listing.delete" back={back}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <input name="reason" required minLength={3} placeholder="Reason (shown to seller)" className="input min-h-9 max-w-xs py-1 text-xs" aria-label="Reason for deletion" />
+                    <input name="confirm" required pattern="DELETE" placeholder="Type DELETE" className="input min-h-9 w-24 py-1 text-xs" aria-label="Type DELETE to confirm" />
+                    <button className={smallDanger}>Delete listing</button>
+                  </Op>
+                </details>
+              )}
             </li>
           ))}
         </ul>

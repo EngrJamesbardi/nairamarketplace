@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { friendlyError } from "@/lib/errors";
 import { parseToMinor } from "@/lib/money";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Single entry point for admin forms (posted natively to /admin/op, see route.ts). Authorisation happens twice: requireAdmin() here, and the
@@ -11,6 +12,11 @@ import { parseToMinor } from "@/lib/money";
  */
 const uuid = z.uuid();
 const text = (max: number) => z.string().trim().max(max).optional().transform((v) => v || null);
+const reason = z.string().trim().min(3, "Enter a reason (at least 3 characters)").max(300);
+/** Destructive operations must be confirmed by typing a word, checked here as well as in the browser. */
+const typed = (word: string) => z.string().trim().refine((v) => v === word, `Type ${word} to confirm`);
+/** Closed logins are banned for 100 years; reopening lifts the ban. */
+const BAN_FOR = "876000h";
 
 const ops = {
   "listing.moderate": z.object({ id: uuid, action: z.enum(["approve", "reject", "remove", "restore"]), reason: text(300), report: uuid.optional().or(z.literal("").transform(() => undefined)) }),
@@ -20,6 +26,12 @@ const ops = {
   "review.status": z.object({ id: uuid, status: z.enum(["published", "hidden"]), reason: text(300) }),
   "verification.review": z.object({ id: uuid, approve: z.enum(["1", "0"]), note: text(300) }),
   "seller.feature": z.object({ id: uuid, featured: z.enum(["1", "0"]) }),
+  "user.close": z.object({ id: uuid, reason, confirm: typed("CLOSE") }),
+  "user.reopen": z.object({ id: uuid }),
+  "user.delete": z.object({ id: uuid, reason, confirm: typed("DELETE") }),
+  "shop.status": z.object({ id: uuid, status: z.enum(["active", "suspended", "closed"]), reason: text(300) }),
+  "shop.delete": z.object({ id: uuid, reason, confirm: typed("DELETE") }),
+  "listing.delete": z.object({ id: uuid, reason, confirm: typed("DELETE") }),
   "country.update": z.object({
     code: z.string().regex(/^[A-Z]{2}$/),
     is_active: z.enum(["on"]).optional(),
@@ -85,7 +97,7 @@ type Op = keyof typeof ops;
 
 /** Runs one admin operation and returns the URL to send the browser back to (with ?ok=1 or ?error=). */
 export async function runAdminOp(formData: FormData): Promise<string> {
-  const { supabase } = await requireAdmin();
+  const { supabase, user: me } = await requireAdmin();
   const op = String(formData.get("op")) as Op;
   const back = String(formData.get("back") ?? "/admin");
   const safeBack = back.startsWith("/admin") ? back : "/admin";
@@ -121,6 +133,82 @@ export async function runAdminOp(formData: FormData): Promise<string> {
     case "seller.feature":
       res = await supabase.rpc("admin_feature_seller", { p_seller: v.id, p_featured: v.featured === "1" });
       break;
+    case "user.close": {
+      // Ban the login first, so a failure leaves nothing half-done; undo the ban if the database refuses (e.g. last admin).
+      const admin = createAdminClient();
+      const { data: target } = await admin.from("profiles").select("status").eq("id", v.id).maybeSingle();
+      if (v.id === me.id) {
+        res = { error: { message: "You cannot close your own account." } };
+        break;
+      }
+      if (!target || target.status === "closed" || target.status === "deleted") {
+        res = { error: { message: target ? `This account is already ${target.status}.` : "User not found" } };
+        break;
+      }
+      const ban = await admin.auth.admin.updateUserById(v.id, { ban_duration: BAN_FOR });
+      if (ban.error) {
+        res = { error: { message: "Could not block the login. Nothing was changed." } };
+        break;
+      }
+      res = await supabase.rpc("admin_set_account_closed", { p_user: v.id, p_close: true, p_reason: v.reason });
+      if (res.error) await admin.auth.admin.updateUserById(v.id, { ban_duration: "none" });
+      break;
+    }
+    case "user.reopen": {
+      res = await supabase.rpc("admin_set_account_closed", { p_user: v.id, p_close: false });
+      if (!res.error) {
+        const unban = await createAdminClient().auth.admin.updateUserById(v.id, { ban_duration: "none" });
+        if (unban.error) res = { error: { message: "The account was reopened, but the login is still blocked. Try Reopen again." } };
+      }
+      break;
+    }
+    case "user.delete": {
+      const del = await supabase.rpc("admin_delete_account", { p_user: v.id, p_reason: v.reason });
+      if (del.error) {
+        res = del;
+        break;
+      }
+      const admin = createAdminClient();
+      const leftover = await removeStoredFiles(admin, del.data ?? [], v.id);
+      // Soft delete: the login is revoked and the email freed, while the anonymised profile keeps message, review and
+      // payment history intact. Re-running Delete on the same account retries this step.
+      const auth = await admin.auth.admin.deleteUser(v.id, true);
+      res = auth.error
+        ? { error: { message: "Personal data was removed, but the login could not be revoked. Run Delete again to retry." } }
+        : leftover
+          ? { error: { message: `Account deleted, but ${leftover} stored file(s) could not be removed. They are no longer linked to anything.` } }
+          : { error: null };
+      break;
+    }
+    case "shop.status":
+      res = await supabase.rpc("admin_set_shop_status", { p_seller: v.id, p_status: v.status, p_reason: v.reason ?? undefined });
+      break;
+    case "shop.delete":
+    case "listing.delete": {
+      // Shop logo and banner live in the avatars bucket; note their paths before the shop details are cleared.
+      const shopFiles: string[] = [];
+      if (op === "shop.delete") {
+        const { data: shop } = await supabase.from("seller_profiles").select("logo_url, banner_url").eq("user_id", v.id).maybeSingle();
+        for (const u of [shop?.logo_url, shop?.banner_url]) {
+          const path = u?.split("/storage/v1/object/public/avatars/")[1];
+          if (path) shopFiles.push(decodeURIComponent(path.split("?")[0]));
+        }
+      }
+      const del = op === "shop.delete"
+        ? await supabase.rpc("admin_delete_shop", { p_seller: v.id, p_reason: v.reason })
+        : await supabase.rpc("admin_delete_listing", { p_listing: v.id, p_reason: v.reason });
+      if (del.error) {
+        res = del;
+        break;
+      }
+      const admin = createAdminClient();
+      let leftover = await removeStoredFiles(admin, del.data ?? []);
+      if (shopFiles.length && (await admin.storage.from("avatars").remove(shopFiles)).error) leftover += shopFiles.length;
+      res = leftover
+        ? { error: { message: `Deleted, but ${leftover} photo(s) could not be removed from storage. They are no longer linked to anything.` } }
+        : { error: null };
+      break;
+    }
     case "country.update":
       res = await supabase.rpc("admin_update_country", {
         p_code: v.code,
@@ -200,4 +288,27 @@ export async function runAdminOp(formData: FormData): Promise<string> {
   }
   revalidatePath("/", "layout");
   return res.error ? `${safeBack}${sep}error=${encodeURIComponent(friendlyError(res.error, res.error.message))}` : `${safeBack}${sep}ok=1`;
+}
+
+/**
+ * Removes listing photos (paths returned by the admin_delete_* functions) and, for a deleted account, the member's avatar
+ * folder. Returns how many files could not be removed. The database rows are already gone, so a failure only leaves
+ * unlinked files behind.
+ */
+async function removeStoredFiles(admin: ReturnType<typeof createAdminClient>, listingPaths: string[], avatarOwner?: string): Promise<number> {
+  let failed = 0;
+  for (let i = 0; i < listingPaths.length; i += 100) {
+    const batch = listingPaths.slice(i, i + 100);
+    const { error } = await admin.storage.from("listing-images").remove(batch);
+    if (error) failed += batch.length;
+  }
+  if (avatarOwner) {
+    const { data: files, error } = await admin.storage.from("avatars").list(avatarOwner, { limit: 1000 });
+    if (error) failed += 1;
+    else if (files?.length) {
+      const { error: rmErr } = await admin.storage.from("avatars").remove(files.map((f) => `${avatarOwner}/${f.name}`));
+      if (rmErr) failed += files.length;
+    }
+  }
+  return failed;
 }

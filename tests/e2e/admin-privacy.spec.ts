@@ -17,7 +17,7 @@ test.describe("admin & moderation", () => {
 
   test("every admin page loads for an administrator", async ({ page }) => {
     await signIn(page, "admin@naira.test");
-    for (const path of ["/admin", "/admin/listings", "/admin/reports", "/admin/users", "/admin/verifications", "/admin/countries", "/admin/categories",
+    for (const path of ["/admin", "/admin/listings", "/admin/reports", "/admin/users", "/admin/shops", "/admin/verifications", "/admin/countries", "/admin/categories",
       "/admin/policies", "/admin/monetisation", "/admin/campaigns", "/admin/plans", "/admin/payments", "/admin/audit"]) {
       const res = await page.goto(path);
       expect(res?.status(), path).toBe(200);

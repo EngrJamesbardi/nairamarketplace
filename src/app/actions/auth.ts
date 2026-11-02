@@ -58,6 +58,8 @@ export async function signIn(_: ActionState, formData: FormData): Promise<Action
   if (error) {
     if (/confirm/i.test(error.message))
       return { error: "Please verify your email first. Check your inbox for the link, or resend it below." };
+    if (error.code === "user_banned" || /banned/i.test(error.message))
+      return { error: "This account has been closed. If you think this is a mistake, use our complaints process." };
     return { error: "Incorrect email or password." };
   }
   revalidatePath("/", "layout");

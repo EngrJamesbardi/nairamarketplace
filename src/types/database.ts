@@ -613,14 +613,14 @@ isOneToOne: false
                   ]
                 },"offers": {
                   Row: {
-                    "amount_minor": number,"buyer_id": string,"conversation_id": string,"created_at": string,"currency": string,"expires_at": string,"id": string,"listing_id": string,"note": string | null,"parent_offer_id": string | null,"proposed_by": string,"quantity": number,"responded_at": string | null,"seller_id": string,"status": Database["public"]['Enums']["offer_status"]
+                    "amount_minor": number,"buyer_id": string,"conversation_id": string,"created_at": string,"currency": string,"expires_at": string,"id": string,"listing_id": string | null,"note": string | null,"parent_offer_id": string | null,"proposed_by": string,"quantity": number,"responded_at": string | null,"seller_id": string,"status": Database["public"]['Enums']["offer_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount_minor": number,"buyer_id": string,"conversation_id": string,"created_at"?: string,"currency": string,"expires_at"?: string,"id"?: string,"listing_id": string,"note"?: string | null,"parent_offer_id"?: string | null,"proposed_by": string,"quantity"?: number,"responded_at"?: string | null,"seller_id": string,"status"?: Database["public"]['Enums']["offer_status"]
+                    "amount_minor": number,"buyer_id": string,"conversation_id": string,"created_at"?: string,"currency": string,"expires_at"?: string,"id"?: string,"listing_id"?: string | null,"note"?: string | null,"parent_offer_id"?: string | null,"proposed_by": string,"quantity"?: number,"responded_at"?: string | null,"seller_id": string,"status"?: Database["public"]['Enums']["offer_status"]
                   }
                   Update: {
-                    "amount_minor"?: number,"buyer_id"?: string,"conversation_id"?: string,"created_at"?: string,"currency"?: string,"expires_at"?: string,"id"?: string,"listing_id"?: string,"note"?: string | null,"parent_offer_id"?: string | null,"proposed_by"?: string,"quantity"?: number,"responded_at"?: string | null,"seller_id"?: string,"status"?: Database["public"]['Enums']["offer_status"]
+                    "amount_minor"?: number,"buyer_id"?: string,"conversation_id"?: string,"created_at"?: string,"currency"?: string,"expires_at"?: string,"id"?: string,"listing_id"?: string | null,"note"?: string | null,"parent_offer_id"?: string | null,"proposed_by"?: string,"quantity"?: number,"responded_at"?: string | null,"seller_id"?: string,"status"?: Database["public"]['Enums']["offer_status"]
                   }
                   Relationships: [
                     {
@@ -1157,14 +1157,14 @@ isOneToOne: false
                   ]
                 },"seller_profiles": {
                   Row: {
-                    "banner_url": string | null,"business_hours": Json | null,"business_name": string | null,"business_registration_number": string | null,"city": string | null,"contact_email": string | null,"contact_phone": string | null,"country_code": string,"created_at": string,"delivery_notes": string | null,"delivery_options": (Database["public"]['Enums']["delivery_option"])[],"description": string | null,"is_featured": boolean,"is_seed": boolean,"logo_url": string | null,"region_id": number | null,"seller_type": Database["public"]['Enums']["seller_type"],"shop_name": string,"show_whatsapp": boolean,"slug": string,"updated_at": string,"user_id": string,"verification_status": Database["public"]['Enums']["verification_status"],"verified_at": string | null,"whatsapp_number": string | null
+                    "banner_url": string | null,"business_hours": Json | null,"business_name": string | null,"business_registration_number": string | null,"city": string | null,"contact_email": string | null,"contact_phone": string | null,"country_code": string,"created_at": string,"delivery_notes": string | null,"delivery_options": (Database["public"]['Enums']["delivery_option"])[],"description": string | null,"is_featured": boolean,"is_seed": boolean,"logo_url": string | null,"region_id": number | null,"seller_type": Database["public"]['Enums']["seller_type"],"shop_name": string,"shop_status": string,"shop_status_changed_at": string | null,"shop_status_reason": string | null,"show_whatsapp": boolean,"slug": string,"updated_at": string,"user_id": string,"verification_status": Database["public"]['Enums']["verification_status"],"verified_at": string | null,"whatsapp_number": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "banner_url"?: string | null,"business_hours"?: Json | null,"business_name"?: string | null,"business_registration_number"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"country_code": string,"created_at"?: string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description"?: string | null,"is_featured"?: boolean,"is_seed"?: boolean,"logo_url"?: string | null,"region_id"?: number | null,"seller_type"?: Database["public"]['Enums']["seller_type"],"shop_name": string,"show_whatsapp"?: boolean,"slug": string,"updated_at"?: string,"user_id": string,"verification_status"?: Database["public"]['Enums']["verification_status"],"verified_at"?: string | null,"whatsapp_number"?: string | null
+                    "banner_url"?: string | null,"business_hours"?: Json | null,"business_name"?: string | null,"business_registration_number"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"country_code": string,"created_at"?: string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description"?: string | null,"is_featured"?: boolean,"is_seed"?: boolean,"logo_url"?: string | null,"region_id"?: number | null,"seller_type"?: Database["public"]['Enums']["seller_type"],"shop_name": string,"shop_status"?: string,"shop_status_changed_at"?: string | null,"shop_status_reason"?: string | null,"show_whatsapp"?: boolean,"slug": string,"updated_at"?: string,"user_id": string,"verification_status"?: Database["public"]['Enums']["verification_status"],"verified_at"?: string | null,"whatsapp_number"?: string | null
                   }
                   Update: {
-                    "banner_url"?: string | null,"business_hours"?: Json | null,"business_name"?: string | null,"business_registration_number"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"country_code"?: string,"created_at"?: string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description"?: string | null,"is_featured"?: boolean,"is_seed"?: boolean,"logo_url"?: string | null,"region_id"?: number | null,"seller_type"?: Database["public"]['Enums']["seller_type"],"shop_name"?: string,"show_whatsapp"?: boolean,"slug"?: string,"updated_at"?: string,"user_id"?: string,"verification_status"?: Database["public"]['Enums']["verification_status"],"verified_at"?: string | null,"whatsapp_number"?: string | null
+                    "banner_url"?: string | null,"business_hours"?: Json | null,"business_name"?: string | null,"business_registration_number"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"country_code"?: string,"created_at"?: string,"delivery_notes"?: string | null,"delivery_options"?: (Database["public"]['Enums']["delivery_option"])[],"description"?: string | null,"is_featured"?: boolean,"is_seed"?: boolean,"logo_url"?: string | null,"region_id"?: number | null,"seller_type"?: Database["public"]['Enums']["seller_type"],"shop_name"?: string,"shop_status"?: string,"shop_status_changed_at"?: string | null,"shop_status_reason"?: string | null,"show_whatsapp"?: boolean,"slug"?: string,"updated_at"?: string,"user_id"?: string,"verification_status"?: Database["public"]['Enums']["verification_status"],"verified_at"?: string | null,"whatsapp_number"?: string | null
                   }
                   Relationships: [
                     {
@@ -1423,11 +1423,20 @@ isOneToOne: false
 "_audit":
 { Args: { "p_action": string,"p_details"?: Json,"p_target_id": string,"p_target_type": string }; Returns: undefined
                            },
+"_clear_shop":
+{ Args: { "p_reason": string,"p_seller": string }; Returns: undefined
+                           },
 "_end_campaign":
 { Args: { "p_id": string,"p_note": string,"p_status": Database["public"]['Enums']["campaign_status"] }; Returns: number
                            },
 "_expire_if_due":
 { Args: { "p_offer": string }; Returns: boolean
+                           },
+"_guard_account_target":
+{ Args: { "p_user": string }; Returns: undefined
+                           },
+"_listing_photo_paths":
+{ Args: { "p_listing"?: string,"p_seller"?: string }; Returns: (string)[]
                            },
 "_post_message":
 { Args: { "p_body": string,"p_conversation": string,"p_kind": string,"p_offer"?: string,"p_sender": string }; Returns: string
@@ -1447,6 +1456,15 @@ isOneToOne: false
 "admin_adjust_credits":
 { Args: { "p_delta": number,"p_reason": string,"p_request_id": string,"p_user": string }; Returns: number
                            },
+"admin_delete_account":
+{ Args: { "p_reason"?: string,"p_user": string }; Returns: (string)[]
+                           },
+"admin_delete_listing":
+{ Args: { "p_listing": string,"p_reason"?: string }; Returns: (string)[]
+                           },
+"admin_delete_shop":
+{ Args: { "p_reason"?: string,"p_seller": string }; Returns: (string)[]
+                           },
 "admin_feature_seller":
 { Args: { "p_featured": boolean,"p_seller": string }; Returns: undefined
                            },
@@ -1460,6 +1478,9 @@ isOneToOne: false
                            },
 "admin_review_verification":
 { Args: { "p_approve": boolean,"p_id": string,"p_note": string }; Returns: undefined
+                           },
+"admin_set_account_closed":
+{ Args: { "p_close": boolean,"p_reason"?: string,"p_user": string }; Returns: undefined
                            },
 "admin_set_campaign_status":
 { Args: { "p_id": string,"p_note": string,"p_status": Database["public"]['Enums']["campaign_status"] }; Returns: undefined
@@ -1484,6 +1505,9 @@ isOneToOne: false
                            },
 "admin_set_setting":
 { Args: { "p_key": string,"p_value": Json }; Returns: undefined
+                           },
+"admin_set_shop_status":
+{ Args: { "p_reason"?: string,"p_seller": string,"p_status": string }; Returns: undefined
                            },
 "admin_set_user_status":
 { Args: { "p_reason"?: string,"p_status": Database["public"]['Enums']["account_status"],"p_until"?: string,"p_user": string }; Returns: undefined
@@ -1580,6 +1604,9 @@ isOneToOne: false
                            },
 "has_role":
 { Args: { "p_role": Database["public"]['Enums']["app_role"],"p_user"?: string }; Returns: boolean
+                           },
+"is_active_seller":
+{ Args: { "p_user": string }; Returns: boolean
                            },
 "is_active_user":
 { Args: { "p_user"?: string }; Returns: boolean
@@ -1715,7 +1742,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_status": "active"|"suspended"|"deactivated"|"deleted","app_role": "admin"|"moderator","campaign_status": "active"|"paused"|"ended"|"cancelled"|"removed","credit_tx_kind": "purchase"|"subscription_grant"|"promotion_spend"|"promotion_refund"|"admin_grant"|"admin_debit","delivery_option": "local_pickup"|"buyer_collection"|"seller_dispatch"|"courier"|"other","item_condition": "new"|"like_new"|"used_good"|"used_fair"|"for_parts","listing_status": "draft"|"active"|"paused"|"reserved"|"sold"|"archived"|"expired","moderation_status": "approved"|"pending_review"|"rejected"|"removed","offer_status": "pending"|"accepted"|"rejected"|"countered"|"withdrawn"|"expired","payment_purpose": "credits"|"subscription"|"promotion","payment_status": "pending"|"succeeded"|"failed"|"cancelled"|"refunded","price_type": "fixed"|"negotiable"|"contact","promotion_placement": "search"|"homepage"|"category","report_reason": "prohibited_item"|"scam_or_fraud"|"counterfeit"|"misleading"|"offensive"|"harassment"|"spam"|"wrong_category"|"other","report_status": "open"|"reviewing"|"resolved"|"dismissed","seller_type": "individual"|"trader"|"shop"|"wholesaler"|"business","subscription_status": "active"|"expired"|"replaced","verification_status": "unverified"|"pending"|"verified"|"rejected"
+            "account_status": "active"|"suspended"|"deactivated"|"deleted"|"closed","app_role": "admin"|"moderator","campaign_status": "active"|"paused"|"ended"|"cancelled"|"removed","credit_tx_kind": "purchase"|"subscription_grant"|"promotion_spend"|"promotion_refund"|"admin_grant"|"admin_debit","delivery_option": "local_pickup"|"buyer_collection"|"seller_dispatch"|"courier"|"other","item_condition": "new"|"like_new"|"used_good"|"used_fair"|"for_parts","listing_status": "draft"|"active"|"paused"|"reserved"|"sold"|"archived"|"expired","moderation_status": "approved"|"pending_review"|"rejected"|"removed","offer_status": "pending"|"accepted"|"rejected"|"countered"|"withdrawn"|"expired","payment_purpose": "credits"|"subscription"|"promotion","payment_status": "pending"|"succeeded"|"failed"|"cancelled"|"refunded","price_type": "fixed"|"negotiable"|"contact","promotion_placement": "search"|"homepage"|"category","report_reason": "prohibited_item"|"scam_or_fraud"|"counterfeit"|"misleading"|"offensive"|"harassment"|"spam"|"wrong_category"|"other","report_status": "open"|"reviewing"|"resolved"|"dismissed","seller_type": "individual"|"trader"|"shop"|"wholesaler"|"business","subscription_status": "active"|"expired"|"replaced","verification_status": "unverified"|"pending"|"verified"|"rejected"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1835,7 +1862,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_status": ["active", "suspended", "deactivated", "deleted"],"app_role": ["admin", "moderator"],"campaign_status": ["active", "paused", "ended", "cancelled", "removed"],"credit_tx_kind": ["purchase", "subscription_grant", "promotion_spend", "promotion_refund", "admin_grant", "admin_debit"],"delivery_option": ["local_pickup", "buyer_collection", "seller_dispatch", "courier", "other"],"item_condition": ["new", "like_new", "used_good", "used_fair", "for_parts"],"listing_status": ["draft", "active", "paused", "reserved", "sold", "archived", "expired"],"moderation_status": ["approved", "pending_review", "rejected", "removed"],"offer_status": ["pending", "accepted", "rejected", "countered", "withdrawn", "expired"],"payment_purpose": ["credits", "subscription", "promotion"],"payment_status": ["pending", "succeeded", "failed", "cancelled", "refunded"],"price_type": ["fixed", "negotiable", "contact"],"promotion_placement": ["search", "homepage", "category"],"report_reason": ["prohibited_item", "scam_or_fraud", "counterfeit", "misleading", "offensive", "harassment", "spam", "wrong_category", "other"],"report_status": ["open", "reviewing", "resolved", "dismissed"],"seller_type": ["individual", "trader", "shop", "wholesaler", "business"],"subscription_status": ["active", "expired", "replaced"],"verification_status": ["unverified", "pending", "verified", "rejected"]
+            "account_status": ["active", "suspended", "deactivated", "deleted", "closed"],"app_role": ["admin", "moderator"],"campaign_status": ["active", "paused", "ended", "cancelled", "removed"],"credit_tx_kind": ["purchase", "subscription_grant", "promotion_spend", "promotion_refund", "admin_grant", "admin_debit"],"delivery_option": ["local_pickup", "buyer_collection", "seller_dispatch", "courier", "other"],"item_condition": ["new", "like_new", "used_good", "used_fair", "for_parts"],"listing_status": ["draft", "active", "paused", "reserved", "sold", "archived", "expired"],"moderation_status": ["approved", "pending_review", "rejected", "removed"],"offer_status": ["pending", "accepted", "rejected", "countered", "withdrawn", "expired"],"payment_purpose": ["credits", "subscription", "promotion"],"payment_status": ["pending", "succeeded", "failed", "cancelled", "refunded"],"price_type": ["fixed", "negotiable", "contact"],"promotion_placement": ["search", "homepage", "category"],"report_reason": ["prohibited_item", "scam_or_fraud", "counterfeit", "misleading", "offensive", "harassment", "spam", "wrong_category", "other"],"report_status": ["open", "reviewing", "resolved", "dismissed"],"seller_type": ["individual", "trader", "shop", "wholesaler", "business"],"subscription_status": ["active", "expired", "replaced"],"verification_status": ["unverified", "pending", "verified", "rejected"]
           }
         }
 } as const
