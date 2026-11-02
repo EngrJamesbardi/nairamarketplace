@@ -9,7 +9,7 @@ export default async function Users({ searchParams }: { searchParams: Promise<SP
   const sp = await searchParams;
   const { supabase, roles, user: me } = await requireAdmin();
   const isAdmin = roles.includes("admin");
-  const status = ["active", "suspended", "deactivated", "deleted"].includes(sp.status ?? "") ? (sp.status as "active") : undefined;
+  const status = ["active", "suspended", "deactivated", "closed", "deleted"].includes(sp.status ?? "") ? (sp.status as "active") : undefined;
   const { data: users, error } = await supabase.rpc("admin_list_users", { p_query: sp.q || undefined, p_status: status, p_limit: 100 });
   const back = `/admin/users?q=${encodeURIComponent(sp.q ?? "")}`;
   return (
@@ -18,7 +18,7 @@ export default async function Users({ searchParams }: { searchParams: Promise<SP
       <Flash sp={sp} />
       <form className="flex flex-wrap gap-2">
         <input name="q" defaultValue={sp.q} placeholder="Name, email or shop" className="input max-w-xs" aria-label="Search users" />
-        <select name="status" defaultValue={sp.status ?? ""} className="input max-w-[10rem]" aria-label="Status"><option value="">Any status</option><option>active</option><option>suspended</option><option>deactivated</option><option>deleted</option></select>
+        <select name="status" defaultValue={sp.status ?? ""} className="input max-w-[10rem]" aria-label="Status"><option value="">Any status</option><option>active</option><option>suspended</option><option>deactivated</option><option>closed</option><option>deleted</option></select>
         <button className="btn-secondary">Search</button>
       </form>
       {error && <p className="text-danger">{error.message}</p>}
@@ -58,6 +58,33 @@ export default async function Users({ searchParams }: { searchParams: Promise<SP
                       <button className={small}>Adjust credits</button>
                     </Op>
                   )}
+                  {isAdmin && u.id !== me.id && u.status === "closed" && (
+                    <Op op="user.reopen" back={back}><input type="hidden" name="id" value={u.id} /><button className={small}>Reopen account</button></Op>
+                  )}
+                  {isAdmin && u.id !== me.id && u.status !== "closed" && u.status !== "deleted" && (
+                    <details className="rounded-lg border border-line p-2">
+                      <summary className="cursor-pointer text-xs font-semibold text-danger">Close account…</summary>
+                      <p className="my-1 text-xs text-muted">Blocks sign-in and hides the member&apos;s shop and listings. Reversible with Reopen.</p>
+                      <Op op="user.close" back={back}>
+                        <input type="hidden" name="id" value={u.id} />
+                        <input name="reason" required minLength={3} placeholder="Reason" className="input min-h-9 w-32 py-1 text-xs" aria-label="Reason for closing" />
+                        <input name="confirm" required pattern="CLOSE" placeholder="Type CLOSE" className="input min-h-9 w-24 py-1 text-xs" aria-label="Type CLOSE to confirm" />
+                        <button className={smallDanger}>Close account</button>
+                      </Op>
+                    </details>
+                  )}
+                  {isAdmin && u.id !== me.id && u.status !== "deleted" && (
+                    <details className="rounded-lg border border-danger/40 p-2">
+                      <summary className="cursor-pointer text-xs font-semibold text-danger">Delete permanently…</summary>
+                      <p className="my-1 text-xs text-muted">Cannot be undone. Revokes the login, anonymises personal details and deletes the member&apos;s shop details, listings and photos. Messages, offers, reviews and payment records are kept under &quot;Deleted member&quot;.</p>
+                      <Op op="user.delete" back={back}>
+                        <input type="hidden" name="id" value={u.id} />
+                        <input name="reason" required minLength={3} placeholder="Reason" className="input min-h-9 w-32 py-1 text-xs" aria-label="Reason for deletion" />
+                        <input name="confirm" required pattern="DELETE" placeholder="Type DELETE" className="input min-h-9 w-24 py-1 text-xs" aria-label="Type DELETE to confirm" />
+                        <button className={smallDanger}>Delete account</button>
+                      </Op>
+                    </details>
+                  )}
                   {isAdmin && u.shop_slug && (
                     <Op op="seller.feature" back={back}><input type="hidden" name="id" value={u.id} /><button name="featured" value="1" className={small}>Feature shop</button><button name="featured" value="0" className={small}>Unfeature</button></Op>
                   )}
@@ -67,7 +94,7 @@ export default async function Users({ searchParams }: { searchParams: Promise<SP
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted">Administrator role grants are deliberately limited to existing administrators and are always audit-logged. Initial administrators are created with the bootstrap script (see docs).</p>
+      <p className="text-xs text-muted">Shops can be suspended, closed or deleted on the <Link className="link" href="/admin/shops">Shops</Link> page. Administrator role grants are deliberately limited to existing administrators and are always audit-logged. Initial administrators are created with the bootstrap script (see docs).</p>
     </>
   );
 }

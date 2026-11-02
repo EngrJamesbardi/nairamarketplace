@@ -25,7 +25,8 @@ export const getSession = cache(async () => {
 export async function requireUser(next?: string) {
   const s = await getSession();
   if (!s.user) redirect(`/auth/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
-  if (s.profile?.status === "suspended") redirect("/account/suspended");
+  // Closed accounts are also banned at sign-in; this catches a session that was already open when the account was closed.
+  if (s.profile?.status === "suspended" || s.profile?.status === "closed") redirect("/account/suspended");
   return s as typeof s & { user: NonNullable<typeof s.user> };
 }
 

@@ -7,6 +7,7 @@ const items = [
   ["/admin/listings", "Listing moderation", false],
   ["/admin/reports", "Reports", false],
   ["/admin/users", "Users & sellers", false],
+  ["/admin/shops", "Shops", true],
   ["/admin/verifications", "Seller verification", true],
   ["/admin/countries", "Countries", true],
   ["/admin/categories", "Categories", true],
