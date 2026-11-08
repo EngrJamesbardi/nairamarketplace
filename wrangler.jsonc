@@ -1,0 +1,27 @@
+// Production Worker for Naira Marketplace (OpenNext). See docs/DEPLOYMENT_CLOUDFLARE.md.
+// Secrets (SUPABASE_SERVICE_ROLE_KEY, ANALYTICS_SALT, UPSTASH_*) are set with `wrangler secret put`, never here.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "naira-marketplace",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    // Serve /offline.html as-is: the default redirect to /offline breaks the service worker's offline fallback.
+    "html_handling": "none"
+  },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "naira-marketplace" }],
+  // Run next to the London Supabase project (AWS eu-west-2) so database calls stay local.
+  "placement": { "region": "aws:eu-west-2" },
+  // Temporary workers.dev URL until the custom domain is approved. Version preview URLs stay off: they would share
+  // production secrets and database.
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  "vars": {
+    // Payments stay off until Paystack credentials exist. Never "mock" in production.
+    "PAYMENTS_ENABLED_PROVIDERS": ""
+  }
+}
