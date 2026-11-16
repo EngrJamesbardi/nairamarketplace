@@ -11,7 +11,7 @@ const body = z.object({ ids: z.array(z.uuid()).min(1).max(6) });
 /** Sent by the browser when a sponsored card has actually been on screen. One count per viewer per campaign per day. */
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) return new NextResponse(null, { status: 403 });
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  const ip = (request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0] ?? "local").trim();
   if (!(await rateLimit(`promo-imp:${ip}`, 120, 60_000)).ok) return new NextResponse(null, { status: 429 });
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return new NextResponse(null, { status: 400 });

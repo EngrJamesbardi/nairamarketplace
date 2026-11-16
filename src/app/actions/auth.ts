@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/request";
 import { safeNextPath } from "@/lib/safe-path";
+import { isStaffRole } from "@/lib/roles";
 import { signInSchema, signUpSchema, passwordSchema, fieldErrors, type ActionState } from "@/lib/validation";
 
 const site = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -54,7 +55,7 @@ export async function signIn(_: ActionState, formData: FormData): Promise<Action
   if (!(await rateLimit(`signin:${ip}:${parsed.data.email}`, 8, 10 * 60 * 1000)).ok)
     return { error: "Too many sign-in attempts. Please wait 10 minutes or reset your password." };
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     if (/confirm/i.test(error.message))
       return { error: "Please verify your email first. Check your inbox for the link, or resend it below." };
@@ -63,7 +64,13 @@ export async function signIn(_: ActionState, formData: FormData): Promise<Action
     return { error: "Incorrect email or password." };
   }
   revalidatePath("/", "layout");
-  redirect(safeNextPath(formData.get("next")));
+  const next = safeNextPath(formData.get("next"));
+  // Admins and moderators with an authenticator confirm a code before anything else. Buyers and sellers are never asked.
+  if (data.user?.factors?.some((f) => f.factor_type === "totp" && f.status === "verified")) {
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
+    if (isStaffRole((roles ?? []).map((r) => r.role as string))) redirect(`/auth/mfa?next=${encodeURIComponent(next)}`);
+  }
+  redirect(next);
 }
 
 export async function signOut() {
@@ -90,6 +97,8 @@ export async function updatePassword(_: ActionState, formData: FormData): Promis
   if (formData.get("password") !== formData.get("confirm")) return { fieldErrors: { confirm: "Passwords do not match" } };
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password: parsed.data });
+  // Accounts with an authenticator must confirm a code before Supabase Auth allows a password change.
+  if (error?.code === "insufficient_aal") redirect("/auth/mfa?next=/auth/reset");
   if (error) return { error: "Your reset link may have expired. Please request a new one." };
   redirect("/account?password=updated");
 }

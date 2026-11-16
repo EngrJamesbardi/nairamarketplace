@@ -44,3 +44,8 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /demo-export/
+
+# cloudflare (OpenNext build output, wrangler state, local secrets)
+/.open-next/
+/.wrangler/
+.dev.vars*

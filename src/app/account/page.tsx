@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { LogOut, Store, Heart, Users, Bell, Shield } from "lucide-react";
-import { requireUser } from "@/lib/auth";
+import { getMfaState, requireUser } from "@/lib/auth";
+import { isStaffRole } from "@/lib/roles";
 import { getCountries } from "@/lib/market";
 import { signOut } from "@/app/actions/auth";
 import { ProfileForm, PreferencesForm } from "./forms";
@@ -15,6 +16,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const { supabase, user, profile, seller, roles } = await requireUser("/account");
   const [countries, { data: regions }] = await Promise.all([getCountries(), supabase.from("regions").select("id, name, country_code").order("name")]);
   const theme = (await cookies()).get("nm_theme")?.value ?? "light";
+  const hasFactor = (await getMfaState()).factors.length > 0;
   return (
     <div className="page max-w-3xl space-y-6">
       <h1 className="h1">Your account</h1>
@@ -38,6 +40,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="card space-y-3 p-5">
         <h2 className="h2">Security</h2>
         <Link href="/auth/forgot" className="link text-sm">Change password (we&apos;ll email you a link)</Link>
+        {(isStaffRole(roles) || hasFactor) && (
+          <Link href="/account/security" className="link block text-sm">
+            Two-step verification: {hasFactor ? "on" : "off"}{isStaffRole(roles) && " (required for Admin)"}
+          </Link>
+        )}
         <Link href="/account/blocked" className="link block text-sm">Blocked members</Link>
       </section>
       <PrivacySection status={profile?.status ?? "active"} />

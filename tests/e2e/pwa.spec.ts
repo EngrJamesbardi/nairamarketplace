@@ -2,7 +2,8 @@ import { test, expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { signIn } from "./helpers";
 
-const SW_PATH = "public/sw.js";
+// Under `wrangler dev` the worker serves the built copy: SW_PATH=.open-next/assets/sw.js
+const SW_PATH = process.env.SW_PATH ?? "public/sw.js";
 
 test.describe("installable PWA", () => {
   test("manifest has the brand identity, standalone display and installable icons", async ({ request }) => {
