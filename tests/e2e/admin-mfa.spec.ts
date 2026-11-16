@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Request } from "@playwright/test";
 import { hydrated, latestEmailLink, serviceClient, signIn, uid } from "./helpers";
 import { createStaff, enrolViaApi, enterCode, rememberSecret, secretFor, userId } from "./mfa";
 
@@ -12,6 +12,9 @@ async function passwordOnly(page: Page, email: string, password = "Password123!"
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
 }
+
+/** The browser's "authenticator added" server-action request, kept so a test can send it again. */
+let lastRecordCall: Request | null = null;
 
 async function enrolInBrowser(page: Page, email: string, name?: string) {
   await hydrated(page);
@@ -26,7 +29,9 @@ async function enrolInBrowser(page: Page, email: string, name?: string) {
   await page.getByRole("button", { name: "Verify and turn on" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "didn't work" })).toBeVisible();
   await enterCode(page, secret);
+  const recordCall = page.waitForRequest((r) => r.method() === "POST" && !!r.headers()["next-action"]);
   await page.getByRole("button", { name: "Verify and turn on" }).click();
+  lastRecordCall = await recordCall;
   await page.waitForURL(/\/account\/security\?added=1/);
   rememberSecret(email, secret);
   return secret;
@@ -65,6 +70,12 @@ test.describe("admin two-step verification", () => {
     const { data: audit } = await db.from("admin_audit_logs").select("action, details").eq("target_id", id).eq("action", "mfa.enrolled");
     expect(audit?.length).toBe(1);
     expect(JSON.stringify(audit)).not.toContain(secretFor(email)!);
+    // Sending the same "authenticator added" request again does not add a second entry.
+    const call = lastRecordCall!;
+    const replay = await page.request.post(call.url(), { headers: call.headers(), data: call.postDataBuffer() ?? undefined });
+    expect(replay.ok()).toBe(true);
+    const { data: again } = await db.from("admin_audit_logs").select("id").eq("target_id", id).eq("action", "mfa.enrolled");
+    expect(again?.length).toBe(1);
 
     // Sign out and back in: password, then a code. A wrong code is refused.
     await signOut(page);
@@ -83,7 +94,7 @@ test.describe("admin two-step verification", () => {
     await page.waitForURL(/\/admin$/);
   });
 
-  test("sign-in keeps the page the admin was going to, and Cancel signs out", async ({ page }) => {
+  test("sign-in keeps the page the admin was going to; Cancel signs out only this browser", async ({ page, browser }) => {
     const email = `mfa-next-${uid()}@example.test`;
     await createStaff(email, "admin");
     await enrolViaApi(email);
@@ -97,14 +108,32 @@ test.describe("admin two-step verification", () => {
     await page.getByRole("button", { name: "Verify" }).click();
     await page.waitForURL(/\/admin\/reports$/);
 
-    await signOut(page);
-    await passwordOnly(page, email);
-    await page.waitForURL(/\/auth\/mfa/);
-    await hydrated(page);
-    await page.getByRole("button", { name: "Cancel and sign out" }).click();
-    await page.waitForURL(/\/auth\/login$/);
-    await page.goto("/account");
-    await expect(page).toHaveURL(/\/auth\/login/);
+    // A second browser signs in with the password, then cancels at the code step.
+    const ctx = await browser.newContext();
+    const other = await ctx.newPage();
+    await passwordOnly(other, email);
+    await other.waitForURL(/\/auth\/mfa/);
+    await hydrated(other);
+    await other.getByRole("button", { name: "Cancel and sign out" }).click();
+    await other.waitForURL(/\/auth\/login$/);
+    await other.goto("/account");
+    await expect(other).toHaveURL(/\/auth\/login/);
+    await ctx.close();
+
+    // The first browser's verified session is untouched: Admin still opens, and its refresh token still works.
+    await page.goto("/admin/reports");
+    await expect(page).toHaveURL(/\/admin\/reports$/);
+    // An access token outlives a sign-out for up to an hour, so check the refresh token too: a global sign-out would revoke it.
+    const cookies = (await page.context().cookies()).filter((c) => /^sb-.*-auth-token(\.\d+)?$/.test(c.name)).sort((a, b) => a.name.localeCompare(b.name));
+    const raw = cookies.map((c) => c.value).join("");
+    const stored = JSON.parse(Buffer.from(raw.replace(/^base64-/, ""), "base64url").toString("utf8")) as { refresh_token: string };
+    const env = Object.fromEntries(readFileSync(".env.local", "utf8").split("\n").filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
+    const refresh = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: stored.refresh_token }),
+    });
+    expect(refresh.status).toBe(200);
   });
 
   test("adding an authenticator signs out other password-only sessions; they come back through the code step", async ({ page }) => {
@@ -236,11 +265,21 @@ test.describe("admin two-step verification", () => {
     const env = Object.fromEntries(readFileSync(".env.local", "utf8").split("\n").filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
     const run = (...args: string[]) =>
       execFileSync("node", ["scripts/reset-mfa.mjs", ...args], { env: { ...process.env, SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }, encoding: "utf8" });
-    // Wrong project is refused; listing changes nothing.
+    const runTyped = (typed: string, ...a: string[]) =>
+      execFileSync("node", ["scripts/reset-mfa.mjs", ...a], { input: `${typed}\n`, env: { ...process.env, SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }, encoding: "utf8" });
+    // Wrong project, a public key or the wrong confirmation are refused and change nothing; listing changes nothing.
     expect(() => run("--project", "gzvidfpfwwosublbogzx", email, "--remove")).toThrow();
+    expect(() =>
+      execFileSync("node", ["scripts/reset-mfa.mjs", "--project", "local", email, "--remove"], {
+        env: { ...process.env, SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY },
+        encoding: "utf8",
+        stdio: "pipe",
+      }),
+    ).toThrow();
+    expect(() => runTyped("someone-else@example.test", "--project", "local", email, "--remove")).toThrow();
     expect(run("--project", "local", email)).toContain("1 factor(s)");
     expect(run("--project", "local", email)).toContain("Nothing changed");
-    const out = run("--project", "local", email, "--remove");
+    const out = runTyped(email, "--project", "local", email, "--remove");
     expect(out).toContain("0 factor(s) left");
     expect(out).not.toContain(secretFor(email)!);
 
@@ -251,8 +290,8 @@ test.describe("admin two-step verification", () => {
     await enrolInBrowser(page, email, "New phone");
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin$/);
-    const { data: audit } = await (await serviceClient()).from("admin_audit_logs").select("action").eq("target_id", await userId(email)).eq("action", "mfa.reset");
-    expect(audit?.length).toBe(1);
+    const { data: audit } = await (await serviceClient()).from("admin_audit_logs").select("action").eq("target_id", await userId(email)).in("action", ["mfa.reset_started", "mfa.reset"]).order("id");
+    expect((audit ?? []).map((a) => a.action)).toEqual(["mfa.reset_started", "mfa.reset"]);
   });
 
   test("password reset with an authenticator asks for the code first", async ({ page, browser }) => {

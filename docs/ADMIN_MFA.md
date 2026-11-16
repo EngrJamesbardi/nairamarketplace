@@ -15,12 +15,14 @@ Admin and moderator accounts must pass two-step verification (an authenticator-a
   factors from `getUser()`. `requireAdmin()` (every admin page, the admin layout and `/admin/op`) requires `aal2`.
 - `src/app/actions/auth.ts`: after a password sign-in, staff with an authenticator go to `/auth/mfa`. Password changes for
   accounts with an authenticator need the code first, because Supabase Auth requires `aal2` for them.
-- `src/app/auth/mfa/`: the code step (rate limited per account and per address; "Cancel and sign out").
+- `src/app/auth/mfa/`: the code step (rate limited per account and per address). "Cancel and sign out" ends only that
+  browser's session; sessions on other devices are not touched.
 - `src/app/account/security/`: set up, list and remove authenticators. Set-up runs in the browser against Supabase Auth, so the
   QR code and setup key never reach this app's server. Removing one needs a verified session; removing the last one asks the
   user to type REMOVE.
 - Security events (`mfa.verified`, `mfa.verify_failed`, `mfa.enrolled`, `mfa.removed`, `mfa.rate_limited`) are logged as one
-  JSON line each with ids only. `mfa.enrolled`, `mfa.removed` and `mfa.reset` are also written to the admin audit log.
+  JSON line each with ids only. `mfa.enrolled` (once per authenticator), `mfa.removed`, `mfa.reset_started` and `mfa.reset`
+  are also written to the admin audit log.
 - Supabase setting: Authentication > Multi-Factor > App authenticator (TOTP) enabled. `supabase/config.toml` enables it locally.
 
 Supabase Auth behaviour worth knowing (checked against the local stack):
@@ -51,7 +53,7 @@ an hour). Removal does not change the password and does not touch any other data
    authenticator under Account > Two-step verification. This route does not write to the app's audit log, so note it there
    or use B.
 
-**B. Script** (writes `mfa.reset` to the admin audit log; prints only ids, names and dates):
+**B. Script** (prints only ids, names and dates; never a secret):
 
 ```
 read -rs SUPABASE_SERVICE_ROLE_KEY && export SUPABASE_SERVICE_ROLE_KEY
@@ -60,7 +62,18 @@ SUPABASE_URL=https://<project-ref>.supabase.co node scripts/reset-mfa.mjs --proj
 unset SUPABASE_SERVICE_ROLE_KEY
 ```
 
-`--project` must match the URL, so a key for the wrong project is refused.
+What it checks and how it fails:
+
+| Check | If it fails |
+| --- | --- |
+| `--project` matches the project in `SUPABASE_URL` | Refused, nothing changed |
+| The key is a service-role key for that project (a legacy JWT key must name the project and `service_role`; Supabase rejects an `sb_secret_` key from another project) | Refused, nothing changed |
+| You type the account's email to confirm `--remove` | Refused, nothing changed |
+| The `mfa.reset_started` audit entry is written **before** anything is removed | Refused, nothing removed |
+| All factors are gone afterwards | `mfa.reset_incomplete` is logged; exit 1, "Recovery is NOT complete" |
+| The `mfa.reset` completion entry is written | Exit 2 with a warning: factors were removed, the start entry exists, record it manually |
+
+Success (exit 0) is reported only when the factors are gone and both audit entries exist.
 
 **If the password is also lost:** reset the factors first (A or B), then use "Forgot password". With an authenticator still
 present, the reset link leads to the code step before the new password can be saved.
@@ -69,5 +82,8 @@ present, the reset link leads to the code step before the new password can be sa
 
 `tests/e2e/admin-mfa.spec.ts` covers set-up, wrong codes, sign-out and sign-in, the code step keeping the target page,
 sessions open before an authenticator was added, a password-only post to `/admin/op`, moderators, buyers and sellers, a
-backup authenticator, removal rules, lost-authenticator recovery with the script, and password reset with an authenticator.
+backup authenticator, removal rules, lost-authenticator recovery with the script (wrong project, public key and wrong
+confirmation refused), one audit entry per authenticator even when the request is replayed, "Cancel and sign out" leaving
+other sessions (and their refresh tokens) working, and password reset with an authenticator. The script's audit-failure
+paths (start entry fails: nothing removed; completion entry fails: exit 2) were tested by hand against the local stack.
 The e2e global setup gives the seeded `admin@naira.test` a test authenticator (local Supabase only).

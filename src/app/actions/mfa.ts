@@ -65,6 +65,15 @@ export async function recordFactorAdded(id: string): Promise<{ ok: boolean }> {
   const { data } = await supabase.auth.getUser();
   const factor = data.user?.factors?.find((f) => f.id === parsed.data && f.status === "verified");
   if (!factor) return { ok: false };
+  // Record each authenticator once, however often this is called.
+  const { data: existing } = await createAdminClient()
+    .from("admin_audit_logs")
+    .select("id")
+    .eq("action", "mfa.enrolled")
+    .eq("target_id", user.id)
+    .eq("details->>factor_id", factor.id)
+    .limit(1);
+  if (existing?.length) return { ok: true };
   securityLog("mfa.enrolled", { user: user.id, factor: factor.id });
   await audit(user.id, "mfa.enrolled", factor);
   return { ok: true };
@@ -95,10 +104,10 @@ export async function removeFactor(_: ActionState, formData: FormData): Promise<
   redirect("/account/security?removed=1");
 }
 
-/** Leave the code step: sign out completely rather than keep a half-verified session. */
+/** Leave the code step: end this browser's session only (sessions on other devices are not touched). */
 export async function cancelMfa() {
   const { supabase } = await getSession();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   revalidatePath("/", "layout");
   redirect("/auth/login");
 }
