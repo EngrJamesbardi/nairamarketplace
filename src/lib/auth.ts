@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
+import { isStaffRole } from "@/lib/roles";
+
+export { isStaffRole };
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -30,10 +33,32 @@ export async function requireUser(next?: string) {
   return s as typeof s & { user: NonNullable<typeof s.user> };
 }
 
-/** Server-side admin check. The database independently re-checks via is_admin() in every admin RPC. */
-export async function requireAdmin() {
-  const s = await requireUser("/admin");
-  if (!s.roles.includes("admin") && !s.roles.includes("moderator")) redirect("/");
+/**
+ * Two-step verification state for the current session (cached per request).
+ * `level` is the `aal` claim of the session's access token, read with getClaims(), which verifies the token's signature.
+ * `factors` come from getUser() (Supabase Auth's own copy), not from the cookie, so a stale cookie cannot hide or invent one.
+ */
+export const getMfaState = cache(async () => {
+  const s = await getSession();
+  const factors = (s.user?.factors ?? []).filter((f) => f.factor_type === "totp" && f.status === "verified");
+  const { data } = s.user ? await s.supabase.auth.getClaims() : { data: null };
+  const level = data?.claims?.aal === "aal2" && data.claims.sub === s.user?.id ? ("aal2" as const) : ("aal1" as const);
+  return { level, factors };
+});
+
+/**
+ * Server-side staff check for every /admin page, the admin layout and runAdminOp (/admin/op).
+ * Admins and moderators must have passed two-step verification in this session (aal2): with an authenticator they are sent to
+ * the code step, without one to the set-up page. The database independently re-checks via is_admin()/is_staff() in every admin RPC.
+ */
+export async function requireAdmin(next = "/admin") {
+  const s = await requireUser(next);
+  if (!isStaffRole(s.roles)) redirect("/");
+  const mfa = await getMfaState();
+  if (mfa.level !== "aal2") {
+    if (mfa.factors.length) redirect(`/auth/mfa?next=${encodeURIComponent(next)}`);
+    redirect("/account/security?required=admin");
+  }
   return s;
 }
 

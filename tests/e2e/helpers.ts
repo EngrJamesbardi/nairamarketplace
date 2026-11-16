@@ -38,7 +38,12 @@ export async function signIn(page: Page, email: string, password = "Password123!
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL((u) => !u.pathname.startsWith("/auth"));
+  await page.waitForURL((u) => !u.pathname.startsWith("/auth") || u.pathname === "/auth/mfa");
+  // Admin and moderator accounts with an authenticator get the code step (see tests/e2e/mfa.ts).
+  if (new URL(page.url()).pathname === "/auth/mfa") {
+    const { passCodeStep } = await import("./mfa");
+    await passCodeStep(page, email);
+  }
 }
 
 /** A tiny valid PNG (1x1) for upload tests. */
