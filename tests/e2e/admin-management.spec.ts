@@ -2,6 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { signIn, uid, serviceClient, hydrated, PNG_1x1 } from "./helpers";
+import { secretFor } from "./mfa";
+import { totp } from "./totp";
 
 /**
  * Administrator account, shop and listing management: close / reopen / permanently delete accounts, suspend / close /
@@ -183,6 +185,9 @@ test("an administrator cannot close or delete their own account, and non-adminis
 
   const admin = anon();
   const { data: s } = await admin.auth.signInWithPassword({ email: "admin@naira.test", password: "Password123!" });
+  // Staff calls need a session that passed two-step verification.
+  const factor = s.user!.factors!.find((f) => f.status === "verified")!;
+  expect((await admin.auth.mfa.challengeAndVerify({ factorId: factor.id, code: totp(secretFor("admin@naira.test")!) })).error).toBeNull();
   const own = await admin.rpc("admin_delete_account", { p_user: s.user!.id, p_reason: "test" });
   expect(own.error?.message).toMatch(/own account/);
   const ownClose = await admin.rpc("admin_set_account_closed", { p_user: s.user!.id, p_close: true, p_reason: "test" });
